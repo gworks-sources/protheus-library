@@ -1,0 +1,57 @@
+#include "totvs.ch"
+
+using namespace Gworks.library.classes
+
+namespace Gworks.library.utils
+
+User Function GwGetFile(xFileType,lSaveDialog,lMemoRead,cDirectory)
+
+    Local cFile as character
+    Local oError as object
+
+    Default xFileType := nil
+    Default lSaveDialog := .F.
+    Default lMemoRead := .F.
+    Default cDirectory := "C:\"
+
+    oError := GwError():Create()
+    oError:cError := "Erro ao tentar selecionar arquivo(s)."
+    oError:cSuggestion := "Tente novamente em instantes ou entre em contato com suporte técnico."
+    oError:cTitleError := "GwGetFile"
+    oError:lError := .F.
+
+    TRY
+        While Empty(cFile)
+            cFile := cGetFile(  xFileType,; // cMascara
+                                "Selecionar arquivo",; // cTitulo
+                                0,; // nMascpadrao
+                                cDirectory,; // cDirinicial
+                                lSaveDialog,; // lSalvar
+                                nOR(GETF_LOCALHARD, GETF_NETWORKDRIVE),; // nOpcoes
+                                .F.,; // lArvore
+                                .T. ) // lKeepCase
+            If Empty(cFile)
+                If MsgYesNo("Deseja cancelar a seleção do arquivo?","Cancelar!?")
+                    cFile := ""
+                    Exit // abandona laço while
+                EndIf
+            EndIf
+        EndDo
+    CATCH oError
+        oError:ShowError()
+    ENDTRY
+
+    If lMemoRead
+        cFile := MemoRead( cFile, /*lChangeCase*/ .F.) // TODO: testar...
+    EndIf
+
+Return cFile
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,28 @@
+#Include "protheus.ch"
+
+namespace Gworks.library.utils
+
+/*/{Protheus.doc} OpenSX
+Manipula arquivos do dicionário de dados referente às tabelas de metadados SX1, SX2 e SX3.
+@author Gworks - Giovani Soares
+@since 06/11/2019
+@return logical, retorna .T. se conseguiu abrir corretamente o alias informado e .F. para indicar falha no processo.
+@param cDictionary, characters, nome dicionário a ser aberto, ex.: SX2.
+@param cAlias, characters, nome do alias a ser usado na workarea, ex.:SX2DIC.
+@type function
+@sample OpenSX("SX3","SX3DIC")
+/*/
+User Function GwOpenDictionary(cDictionary,cAlias)
+	Local lRet := .F.
+	Default cDictionary := ""
+	Default cAlias := ""
+	If Upper(cDictionary) $ "SX1/SX2/SX3/SX6/SIX" .And. !Empty(cAlias)
+		If Select(cAlias) > 0
+			(cAlias)->(DbCloseArea())
+		EndIf
+		OpenSxs(,,,,,cAlias,cDictionary,,.F.)
+		If Select(cAlias) > 0
+			lRet := .T.
+		EndIf
+	EndIf
+Return lRet

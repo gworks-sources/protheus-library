@@ -1,0 +1,32 @@
+#include 'totvs.ch'
+
+namespace Gworks.library.utils
+
+/*/{Protheus.doc} fHelp
+Implementação da função Help para exibição de notificações ao usuário com tratativa para uso em rotinas MVC.
+@type function
+@author Gworks - Giovani Soares
+@since 26/03/2021
+@param cTit, character, título da mensagem
+@param cErro, character, descrição do problema
+@param cSolucao, character, descrição da solução
+@param oModel, object, modelo de dados (opcional)
+@obs a função help() já trata automaticamente chamadas realizadas por webservice rest no modelo MVC.
+/*/
+User Function GwHelp(cTit,cErro,cSolucao,oModel)
+    Default cTit     := ""
+    Default cErro    := ""
+    Default cSolucao := ""
+    Default oModel   := nil
+    If ValType(oModel) == "O" .And. oModel:ClassName() == "FWFORMMODEL"
+        oModel:SetErrorMessage(nil,;
+            nil,;
+            nil,;
+            nil,;
+            IIF(!Empty(cTit),cTit,"Modelo/operação inválidos"),;
+            IIF(!Empty(cErro),cErro,"Não foi possível validar o modelo de dados e/ou a operação realizada."),;
+            IIF(!Empty(cSolucao),cSolucao,"Favor entrar em contato com o suporte técnico."))
+    Else
+        Help(nil, nil, cTit, nil, cErro, 1, 0, nil, nil, nil, nil, nil, {cSolucao})
+    EndIf
+Return

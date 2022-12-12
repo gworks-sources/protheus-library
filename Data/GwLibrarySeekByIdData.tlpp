@@ -1,0 +1,31 @@
+#include "totvs.ch"
+
+using namespace Gworks.library.utils
+
+namespace Gworks.library.data
+
+// ex. bdound - { |x| "MinhaChaveParaValidacao" == x }
+User Function GwSeekById(cAlias, nId, bFound, nIndexFound)
+    Local lFound := .T.
+    Default cAlias := ""
+    Default nId := nil
+    Default bFound := nil
+    Default nIndexFound := 1
+    If nId == nil
+        Return .F.
+    EndIf
+    (cAlias)->(DbGoTo(nId))
+    If ValType(bFound) == "B"
+        If u_GwOpenDictionary("SXI","XIDIC")
+            If XIDIC->(MsSeek(cAlias,cValToChar(nOrdem)))
+                cIndexFields := AllTrim(XIDIC->&("CHAVE"))
+            EndIf
+        EndIf
+        If !Empty(cIndexFields)
+            lFound := Eval(bFound,AllTrim((cAlias)->&(cIndexFields)))
+            If ValType(lFound) != "L"
+                UserException("SeekByString - bFound retornou um valor não booleano.")
+            EndIf
+        EndIf
+    EndIf
+Return lFound

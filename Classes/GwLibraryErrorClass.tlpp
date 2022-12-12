@@ -1,0 +1,138 @@
+#include 'totvs.ch'
+#include "msobject.ch"
+
+#define CRLF chr(13)+chr(10)
+#define CRLF2 CRLF+CRLF
+
+using namespace Gworks.library.utils
+using namespace Gworks.library.functions
+
+namespace Gworks.library.classes
+
+Class GwError From ErrorClass
+
+    Public Data cError as character default ""
+    Public Data cSuggestion as character default ""
+    Public Data cTitleError as character default ""
+    Public Data cAutoGRLog as character default ""
+    Public Data lError as logical default .F.
+    Public Data lCanReplaced as logical default .T.
+
+    Public Method New() Constructor
+    Public Method Create() Constructor
+    Public Method SetError()
+    Public Method GetErrorByName()
+    Public Method HasError()
+    Public Method ShowError()
+    Public Method SetAutoGRLog()
+    Public Method SetAutoGRLogFromArray()
+    Public Method ShowAutoGRLog()
+    Public Method DefineWithError()
+    Public Method SetCanReplaced()
+
+EndClass
+
+Method New(cError,cSuggestion,cTitleError,lError) Class GwError; :New()
+    Default cError := ""
+    Default cSuggestion := ""
+    Default cTitleError := ""
+    Default lError := .T.
+    Self:SetError(cError,cSuggestion,cTitleError,lError)
+Return Self
+
+Method Create() Class GwError; :New()
+    Self:lError := .F.
+    Self:lCanReplaced := .T.
+Return Self
+
+Method SetError(cError,cSuggestion,cTitleError,lError) Class GwError
+    Default cError := ""
+    Default cSuggestion := ""
+    Default cTitleError := FunName()
+    Default lError := .T.
+    Self:cError := cError
+    Self:cSuggestion := cSuggestion
+    Self:cTitleError := cTitleError
+    Self:lError := .T.
+    Self:lCanReplaced := .T.
+    Self:GenCode := 0
+    Self:Description := cError
+Return
+
+Method GetErrorByName(cOption) Class GwError
+    Local cRet := ""
+    Default cOption := ERROR
+    Do Case
+        Case cOption == "ERROR" ; cRet := Self:cError
+        Case cOption == "SUGGESTION" ; cRet := Self:cSuggestion
+        Case cOption == "TITLEERROR" ; cRet := Sefl:cTitleError
+    EndCase
+Return cRet
+
+Method HasError() Class GwError
+Return Self:lError
+
+Method ShowError(cOption,cTitle,lShowAutoGRLog,lDefineWithError,lUpdateErrorClass) Class GwError
+    Local cShowError := ""
+    Default cOption := "HELP"
+    Default cTitle := ::cTitleError
+    Default lShowAutoGRLog := .T.
+    Default lDefineWithError := .T.
+    Default lUpdateErrorClass := .T.
+    If !Empty(::cSuggestion)
+        cShowError += CRLF2
+        cShowError += ::cSuggestion
+    EndIf
+    Do Case
+        Case cOption == "INFO"  ; FwAlertInfo(cShowError,cTitle)
+        Case cOption == "STOP"  ; FwAlertError(cShowError,cTitle)
+        Case cOption == "ALERT" ; FwAlertWarning(cShowError,cTitle)
+        Case cOption == "HELP"  ; u_GwHelp(cTitle,::cError,::cSuggestion)
+    EndCase
+    If !Empty(::cAutoGRLog) .And. lShowAutoGRLog
+        ::ShowAutoGRLog()
+    EndIf
+    If lDefineWithError
+        ::DefineWithError()
+    EndIf
+    If lUpdateErrorClass
+        ::GenCode := 0
+        ::Description := cShowError
+    EndIf
+Return
+
+Method SetAutoGRLog(cAutoGRLog) Class GwError
+    Self:cAutoGRLog := cAutoGRLog
+Return
+
+Method SetAutoGRLogFromArray(aError,cClassOrigin) Class GwError
+    Default cClassOrigin := "FwFormModel"
+    Do Case
+        Case Upper(cClassOrigin) == Upper("FwFormModel")
+            Self:cAutoGRLog := "Detalhes:" + CRLF
+            Self:cAutoGRLog += "Id do formulário de origem: " + '[ ' + cValToChar(aError[01]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Id do campo de origem: "      + '[ ' + cValToChar(aError[02]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Id do formulário de erro: "   + '[ ' + cValToChar(aError[03]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Id do campo de erro: "        + '[ ' + cValToChar(aError[04]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Id do erro: "                 + '[ ' + cValToChar(aError[05]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Mensagem do erro: "           + '[ ' + cValToChar(aError[06]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Mensagem da solução: "        + '[ ' + cValToChar(aError[07]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Valor atribuído: "            + '[ ' + cValToChar(aError[08]) + ' ]' + CRLF
+            Self:cAutoGRLog += "Valor anterior: "             + '[ ' + cValToChar(aError[09]) + ' ]' + CRLF
+    EndCase
+Return
+
+Method ShowAutoGRLog() Class GwError
+    AutoGRLog(::cAutoGRLog)
+    MostraErro()
+Return
+
+Method DefineWithError(lError) Class GwError
+    Default lError := .T.
+    Self:lError := lError
+Return
+
+Method SetCanReplaced(lReplaced) Class GwError
+    Default lReplaced := .T.
+    ::lCanReplaced := lReplaced
+Return

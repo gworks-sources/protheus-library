@@ -1,0 +1,43 @@
+#include "totvs.ch"
+
+namespace Gworks.library.data
+
+User Function GwSeekByString(cAlias, cSeek, nOrdem, lFilialAuto, lRestArea, lCloseArea)
+    Local lSeek := .F. as logical
+    Local aArea := {} as array
+    Default cAlias := ""
+    Default cSeek := ""
+    Default nOrdem := 1
+    Default lFilialAuto := .F.
+    Default lRestArea := nil
+    Default lCloseArea := nil
+    If Empty(cAlias) .Or. Empty(cSeek)
+        Return .F.
+    EndIf
+    If lFilialAuto
+        cSeek := xFilial(cAlias) + cSeek
+    EndIf
+    If ValType(lRestArea) == "U"
+        lRestArea := If(Select(cAlias)>0,.T.,.F.)
+    EndIf
+    If ValType(lCloseArea) == "U"
+        lCloseArea := !lRestArea // se for restaurar a area, nao a fecha e vice-versa
+    EndIf
+    If lRestArea
+        aArea := (cAlias)->(GetArea())
+    EndIf
+    DbSelectArea(cAlias)
+    (cAlias)->(DbSetOrder(nOrdem))
+    (cAlias)->(DbGoTop())
+    lSeek := (cAlias)->(MsSeek(cSeek))
+    If lRestArea
+        RestArea(aArea)
+    EndIf
+    If lCloseArea
+        (cAlias)->(DbCloseArea())
+    EndIf
+Return lSeek
+
+
+
+

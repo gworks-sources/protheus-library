@@ -1,0 +1,50 @@
+#include "totvs.ch"
+
+namespace Gworks.library.utils
+
+User Function GwGetArea(aAlias,lAliasPrincipal)
+    Local aAreas as array
+    Local cAlias as character
+    Local cAliasPrincipal as character
+    Local nI as numeric
+    Local nPos as numeric
+    aAreas := {}
+    For nI:=1 To Len(aAlias)
+        cAlias := aAlias[nI]
+        aAdd(aAreas,(cAlias)->(GetArea()))
+    Next
+    If lAliasPrincipal
+        nPos := aScan(aAreas, {|x| x[1] == GetArea()[1]}) // verifica se o alias selecionado já não foi passado via parâmetro aAlias
+        If nPos > 0 // se sim
+            cAliasPrincipal := aAreas[nPos,1] // sinaliza que o Alias em questão é principal
+        Else
+            aAdd(aAreas,GetArea())
+            cAliasPrincipal := aAreas[Len(aAreas),1]
+        EndIf
+    Else
+        cAliasPrincipal := ""
+    EndIf
+Return {aAreas,/*cAliasPrincipal*/cAliasPrincipal}
+
+User Function GwRestArea(aAreas,cIgnore)
+    Local aArea as array
+    Local cAliasPrincipal as character
+    Local nAliasPrincipal as numeric
+    Local nI as numeric
+    Default cIgnore := ""
+    cAliasPrincipal := aAreas[2]
+    For nI:=1 To Len(aAreas[1])
+        aArea := aAreas[1,nI]
+        If aArea[1] != cAliasPrincipal .And. !(aArea[1] $ cIgnore)
+            RestArea(aArea)
+        Else
+            nAliasPrincipal := nI // identifica a posicao do alias principal
+        EndIf
+    Next
+    If nAliasPrincipal > 0
+        aArea := aAreas[1,nAliasPrincipal]
+        If !(aArea[1] $ cIgnore)
+            RestArea(aArea) // se houver, restaura o alias principal por último para garantir a integridade do posicionamento
+        EndIf
+    EndIf
+Return

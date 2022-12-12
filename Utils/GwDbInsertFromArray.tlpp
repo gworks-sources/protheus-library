@@ -1,0 +1,63 @@
+#include "totvs.ch"
+#include "dbstruct.ch"
+// 1 - Nome - DBS_NAME
+// 2 - Tipo - DBS_TYPE
+// 3 - Tamanho - DBS_LEN
+// 4 - Decimais - DBS_DEC
+
+#define FIELD_NAME 1
+#define FIELD_CONTENT 2
+
+namespace Gworks.library.utils
+
+/*/{Protheus.doc} GwDbInsertFromArray
+Insere registros em uma tabela do banco de dados
+@type function
+@version 12.1.33
+@author Gworks / Brasoft - Giovani Soares
+@since 02/05/2022
+@param cAlias, character, nome do alias, exemplo: CT1
+@param aData, array, array de elementos no formato {{"NOME_COLUNA","CONTEUDO"}}, ex.: {{"CT1_FILIAL","0101"},{"CT1_CONTA","1321548112"}}
+@return logical, se .T. rotina executada com sucesso, se .F. com falhas
+/*/
+User Function GwDbInsertFromArray(cAlias,aData)
+
+    Local aArea as array
+    Local nI as numeric
+    Local cField as character
+    Local xValue as variant
+
+    Default cAlias := ""
+    Default aData := {}
+
+    If Empty(cAlias) .Or. Empty(aData)
+        UserException("GwDbInsertFromArray - Parâmetros inválidos ou não informados.")
+    EndIf
+
+    aArea := (cAlias)->(GetArea())
+
+    aStruct := (cAlias)->(DbStruct())
+
+    If Empty(aStruct)
+        RestArea(aArea)
+        Return .F.
+    EndIf
+
+    BEGIN TRANSACTION
+    RecLock(cAlias,.T.)
+    For nI:=1 to Len(aStruct)
+        cField := AllTrim(aStruct[nI,DBS_NAME])
+        nPos := aScan(aData,{|x| AllTrim(x[1]) == cField})
+        If nPos > 0
+            xValue := aData[nPos,FIELD_CONTENT]
+        Else
+            xValue := CriaVar(cField, .T.)
+        EndIf
+        (cAlias)->&(cField) := xValue
+    Next
+    (cAlias)->(MsUnlock())
+    END TRANSACTION
+
+    RestArea(aArea)
+
+Return .T. // TODO: implementar método para conferir se o registro foi incluído corretamente

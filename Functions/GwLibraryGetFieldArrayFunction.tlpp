@@ -1,0 +1,50 @@
+#include "totvs.ch"
+
+using namespace Gworks.library.classes
+using namespace Gworks.library.utils
+
+namespace Gworks.library.functions
+
+User Function GwGetFieldArray(cAlias)
+
+    Local aFields as array
+    Local oError as object
+
+    oError := GwError():Create()
+    oError:cError := "Erro indefinido ao ler o dicionário de dados SX3."
+    oError:cSuggestion := "Entre em contato com o suporte técnico."
+    oError:cTitleError := "GwGetFieldArray"
+    oError:lError := .F.
+
+    TRY
+        If !u_GwOpenDictionary("SX3","X3DIC")
+            oError:SetError("Erro ao ler o dicionário de dados SX3.",;
+                            "Tente novamente em instantes ou entre em contato com o suporte técnico.",;
+                            "GwGetFieldArray")
+            oError:ShowError()
+            THROW oError
+        EndIf
+
+        X3DIC->(DbSetOrder(1)) // X3_ARQUIVO+X3_ORDEM
+        If !X3DIC->(MsSeek(cAlias))
+            oError:SetError("Alias " + cAlias + " inexistente no dicionário de dados SX3.",;
+                            "Informe outro alias na chamada da função ou entre em contato com o suporte técnico.",;
+                            "GwGetFieldArray")
+            oError:ShowError()
+            THROW oError
+        EndIf
+
+        aFields := {}
+        While !X3DIC->(EOF()) .And. X3DIC->X3_ARQUIVO == cAlias
+            aAdd(aFields,AllTrim(X3DIC->&("X3_CAMPO")))
+            X3DIC->(DbSkip())
+        EndDo
+    CATCH oError
+        oError:ShowError()
+    FINALLY
+        If Select("X3DIC")
+            X3DIC->(DbCloseArea())
+        EndIf
+    ENDTRY
+
+Return aFields
