@@ -26,7 +26,7 @@ Class GWSequence
     Public Method GetSequence() as character
 
     Private Method StartSequence() as logical
-    Private Method IncrementSequence( lInclui ) as character
+    Private Method IncrementSequence(lInclui) as character
     Private Method GetMaxSequenceFromDataBase( cCampo, cPrefixo, nTamCampo ) as character
     Private Method GetFieldLength() as numeric
     Private Method CommitSequence()
@@ -128,37 +128,29 @@ Method StartSequence() Class GWSequence as logical
 Return .T.
 
 
-Method IncrementSequence( lInclui as logical ) Class GWSequence as character
-
+Method IncrementSequence( lInclui ) Class GWSequence as character
     Local cRet      := ""  as character
     Local cPrefixo  := ""  as character
     Local cSequence := ""  as character
     Local lLock     := .F. as logical
-
     Default lInclui := .F.
-
     while !lLock
-
         cPrefixo  := AllTrim(ZW0->ZW0_PREFIX)
         cSequence := AllTrim(Replace(ZW0->ZW0_SEQUEN,cPrefixo,""))
-
         do case
             case !lInclui ; cRet := cPrefixo + Soma1(cSequence)
             case  lInclui ; cRet := cPrefixo + cSequence
         endcase
-
         if LockByName(cRet,.T.,.T.)
             fGravaSequen(cRet)
             UnLockByname(cRet,.T.,.T.)
             lLock := .T.
         endif
-
     enddo
-
 Return cRet
 
 
-Method GetMaxSequenceFromDataBase( cCampo as character, cPrefixo as character, nTamCampo as numeric ) Class GWSequence as character // nao considera a familia
+Method GetMaxSequenceFromDataBase( cCampo, cPrefixo, nTamCampo ) Class GWSequence as character // nao considera a familia
 
     Local cRet       := "" as character
     Local cAlias     := "" as character
@@ -199,29 +191,21 @@ Method GetMaxSequenceFromDataBase( cCampo as character, cPrefixo as character, n
     cWhereSQL += if(!Empty(cPrefixo), "TBL." + cCampo + " LIKE '" + Upper(cPrefixo) + "%' AND ", "") // B1_COD LIKE 'CHAPA%'
     cWhereSQL += "TBL.D_E_L_E_T_ = ' ' "
     cWhereSQL += "%"
-
     cAlias := GetNextAlias()
-
     BeginSQL Alias cAlias
-
         SELECT %exp:cFieldSQL% as MAXSEQ
         FROM %exp:cTableSQL% TBL // SB1010
         WHERE %exp:cWhereSQL%
-
     EndSQL
 
     DbSelectArea(cAlias)
 
     if !(cAlias)->(EOF()) .And. !Empty((cAlias)->MAXSEQ)
-
         cRet := Replace( (cAlias)->MAXSEQ, cPrefixo ) // "CHAPA0000000003" -> "0000000003"
         cRet := Soma1(cRet)                           // "0000000003" -> "0000000004"
         cRet := cPrefixo+cRet                         // "CHAPA0000000004"
-
     else
-
         cRet := cPrefixo+StrZero(1,nTamCampo-Len(cPrefixo))
-
     endif
 
     (cAlias)->(DbCloseArea())
