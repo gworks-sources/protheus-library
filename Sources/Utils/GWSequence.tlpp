@@ -6,7 +6,7 @@ namespace Gworks.Library.Utils
 
 Static oSequence__ := nil as object
 
-/*/{Protheus.doc} GWSequence
+/*/{Protheus.doc} GWGetSequence
 Função para criar números sequênciais com possibilidade de fazer o controle
 sequêncial por prefixos.
 @type function
@@ -24,7 +24,7 @@ sequêncial por prefixos.
     - U_GWGetSeq("B1_COD"   , ""     , "ESCRIT", .T.) // "000000000000001"
     - U_GWGetSeq("ZX_DOCPRD", "P2103", ""      , .T.) // "P21030001"
 /*/
-User Function GWSequence( cCampo as character, cPrefixo as character, cFamilia as character, lReboot as logical )
+User Function GWGetSequence( cCampo as character, cPrefixo as character, cFamilia as character, lReboot as logical )
 
     Local cRet := "" as character
 
@@ -33,7 +33,7 @@ User Function GWSequence( cCampo as character, cPrefixo as character, cFamilia a
     Default cFamilia := ""
     Default lReboot  := .T.
 
-    oSequence__ := GWGetSequence():New( cCampo, cPrefixo, cFamilia, lReboot )
+    oSequence__ := GWSequence():New( cCampo, cPrefixo, cFamilia, lReboot )
 
     cRet := oSequence__:GetSequence()
 
