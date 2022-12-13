@@ -1,0 +1,116 @@
+#include 'totvs.ch'
+#include "msobject.ch"
+
+#define CRLF chr(13)+chr(10)
+#define CRLF2 CRLF+CRLF
+
+using namespace Gworks.library.utils
+using namespace Gworks.library.functions
+
+namespace Gworks.library.classes
+
+Class GetSequence
+
+    // Public   : métodos/atributos disponíveis em qualquer lugar
+    // Private  : métodos/atributos disponíveis apenas dentro da classe
+    // Protected: métodos/atributos extendidos à classes herdadas desta
+
+    Protected Data aArea       as array     default {}
+    Protected Data nLenCampo   as numeric   default 0
+    Protected Data nLenPrefixo as numeric   default 0
+    Protected Data nLenFamilia as numeric   default 0
+    Protected Data nLenSequen  as numeric   default 0
+    Protected Data cSequen     as character default ""
+
+    Protected Data cCampo     as character default ""
+    Protected Data cPrefixo   as character default ""
+    Protected Data cFamilia   as character default ""
+    Protected Data lReboot_    as logical   default .T.
+
+    Public Method New() Constructor
+    Public Method IncluiNovo as logical
+
+EndClass
+
+
+Method New( cArgCampo as character, cArgPrefixo as character, cArgFamilia as character, lArgReboot as logical ) Class GetSequence
+
+    Default cArgCampo   := ""
+    Default cArgPrefixo := Space(nLenPrefixo)
+    Default cArgFamilia := Space(nLenFamilia) // nome da familia do campo
+    Default lArgReboot  := .T. // atualiza o controle sequêncial com base no banco de dados
+
+    Self:aArea       := GetArea()
+    Self:nLenCampo   := TamSx3("ZW0_CAMPO" )[1]
+    Self:nLenPrefixo := TamSx3("ZW0_PREFIX")[1]
+    Self:nLenFamilia := TamSx3("ZW0_FAMI"  )[1]
+    Self:nLenSequen  := TamSx3("ZW0_SEQUEN")[1]
+    Self:cSequen     := ""
+
+    Self:cCampo     := cArgCampo
+    Self:cPrefixo   := cArgPrefixo
+    Self:cFamilia   := cArgFamilia
+    Self:lReboot_    := lArgReboot
+
+    if Empty(cCampo)
+        Return ""
+    endif
+
+    Self:cCampo   := PadR( Self:cCampo  , nLenCampo  , " " )
+    Self:cPrefixo := PadR( Self:cPrefixo, nLenPrefixo, " " )
+    Self:cFamilia := PadR( Self:cFamilia, nLenFamilia, " " )
+    Self:cSequen  := PadR( Self:cSequen, nLenSequen , " " )
+
+    DbSelectArea("ZW0")
+    ZW0->(DbSetOrder(1)) // ZW0_FILIAL+ZW0_FAMI+ZW0_CAMPO+ZW0_PREFIX
+    ZW0->(DbGoTop())
+
+    BEGIN TRANSACTION
+
+        do case
+
+            case ZW0->(MsSeek(xFilial("ZW0")+Self:cFamilia+Self:cCampo+Self:cPrefixo))
+
+                Self:cSequen := Self:fGetSequen(.F.)
+
+            case Self:IncluiNovo
+
+                Self:cSequen := Self:fGetSequen(.T.)
+
+        endcase
+
+    END TRANSACTION
+
+    RestArea(aArea)
+
+Return Self
+
+Method IncluiNovo Class GetSequence as logical
+
+    Local nTamCampo_ := 0
+
+    nTamCampo_ := fTamCampo(cCampo_)
+
+    if nTamCampo_ <= 0
+        Return .F.
+    endif
+
+    RecLock("ZW0",.T.)
+
+        ZW0->ZW0_FILIAL := xFilial("ZW0")
+        ZW0->ZW0_FAMI   := cFamilia_ // ""
+        ZW0->ZW0_CAMPO  := cCampo_   // "B1_COD"
+        ZW0->ZW0_PREFIX := cPrefixo_ // "P2103"
+        cPrefixo_       := AllTrim(cPrefixo_)
+
+        if lReboot_
+            ZW0->ZW0_SEQUEN := fMaxDataBase()
+        else
+            ZW0->ZW0_SEQUEN := cPrefixo_+StrZero(1,nTamCampo_-Len(cPrefixo_)) // P21040001
+        endif
+
+    ZW0->(MsUnLock())
+
+Return .T.
+
+
