@@ -1,8 +1,12 @@
 #include "protheus.ch"
 
+using namespace Gworks.library.classes
+
 namespace Gworks.library.utils
 
-/*/{Protheus.doc} GWGetSeq
+Static oSequence__ := nil as object
+
+/*/{Protheus.doc} GWSequence
 Função para criar números sequênciais com possibilidade de fazer o controle
 sequêncial por prefixos.
 @type function
@@ -15,215 +19,22 @@ sequêncial por prefixos.
 @return character, variável que será retornado o sequêncial gerado, ex.: "CHAPA0000000001"
 @obs o parâmetro cSequen deve ser passado por referência "@"
 @example
-    - GWGetSeq("B1_COD"   , "CHAPA", "ROCHAS", .T.) // "CHAPA0000000001"
-    - GWGetSeq("B1_COD"   , "BLOCO", "ROCHAS", .T.) // "BLOCO0000000001"
-    - GWGetSeq("B1_COD"   , ""     , "ESCRIT", .T.) // "000000000000001"
-    - GWGetSeq("ZX_DOCPRD", "P2103", ""      , .T.) // "P21030001"
+    - U_GWGetSeq("B1_COD"   , "CHAPA", "ROCHAS", .T.) // "CHAPA0000000001"
+    - U_GWGetSeq("B1_COD"   , "BLOCO", "ROCHAS", .T.) // "BLOCO0000000001"
+    - U_GWGetSeq("B1_COD"   , ""     , "ESCRIT", .T.) // "000000000000001"
+    - U_GWGetSeq("ZX_DOCPRD", "P2103", ""      , .T.) // "P21030001"
 /*/
-User Function GWGetSeq( cArgCampo as character, cArgPrefixo as character, cArgFamilia as character, lArgReboot as logical )
+User Function GWSequence( cCampo as character, cPrefixo as character, cFamilia as character, lReboot as logical )
 
-    Local aArea         := {} as array
-    Local nLenCampo     := 0  as numeric
-    Local nLenPrefixo   := 0  as numeric
-    Local nLenFamilia   := 0  as numeric
-    Local nLenSequen    := 0  as numeric
-    Local cSequen       := "" as character
+    Local cRet := "" as character
 
-    Default cArgCampo   := ""
-    Default cArgPrefixo := Space(nLenPrefixo)
-    Default cArgFamilia := Space(nLenFamilia) // nome da familia do campo
-    Default lArgReboot  := .T. // atualiza o controle sequêncial com base no banco de dados
+    Default cCampo   := ""
+    Default cPrefixo := ""
+    Default cFamilia := ""
+    Default lReboot  := .T.
 
-    Private cCampo_     := cArgCampo
-    Private cPrefixo_   := cArgPrefixo
-    Private cFamilia_   := cArgFamilia
-    Private lReboot_    := lArgReboot
+    oSequence__ := GWGetSequence():New( cCampo, cPrefixo, cFamilia, lReboot )
 
-    aArea       := GetArea()
-    nLenCampo   := TamSx3("ZW0_CAMPO" )[1]
-    nLenPrefixo := TamSx3("ZW0_PREFIX")[1]
-    nLenFamilia := TamSx3("ZW0_FAMI"  )[1]
-    nLenSequen  := TamSx3("ZW0_SEQUEN")[1]
-    cSequen     := ""
-
-    if Empty(cCampo_)
-        Return ""
-    endif
-
-    cCampo_   := PadR(cCampo_  , nLenCampo  , " ")
-    cPrefixo_ := PadR(cPrefixo_, nLenPrefixo, " ")
-    cFamilia_ := PadR(cFamilia_, nLenFamilia, " ")
-    cSequen  := PadR(cSequen , nLenSequen , " ")
-
-    DbSelectArea("ZW0")
-    ZW0->(DbSetOrder(1)) // ZW0_FILIAL+ZW0_FAMI+ZW0_CAMPO+ZW0_PREFIX
-    ZW0->(DbGoTop())
-
-    BEGIN TRANSACTION
-
-        do case
-
-            case ZW0->(MsSeek(xFilial("ZW0")+cFamilia+cCampo_+cPrefixo_))
-
-                cSequen := fGetSequen(.F.)
-
-            case fInclui()
-
-                cSequen := fGetSequen(.T.)
-
-        endcase
-
-    END TRANSACTION
-
-    RestArea(aArea)
-
-Return cSequen
-
-Static Function fInclui()
-
-    Local nTamCampo_ := 0
-
-    nTamCampo_ := fTamCampo(cCampo_)
-
-    if nTamCampo_ <= 0
-        Return .F.
-    endif
-
-    RecLock("ZW0",.T.)
-
-        ZW0->ZW0_FILIAL := xFilial("ZW0")
-        ZW0->ZW0_FAMI   := cFamilia_ // ""
-        ZW0->ZW0_CAMPO  := cCampo_   // "B1_COD"
-        ZW0->ZW0_PREFIX := cPrefixo_ // "P2103"
-        cPrefixo_        := AllTrim(cPrefixo_)
-
-        if lReboot_
-            ZW0->ZW0_SEQUEN := fMaxDataBase()
-        else
-            ZW0->ZW0_SEQUEN := cPrefixo_+StrZero(1,nTamCampo_-Len(cPrefixo_)) // P21040001
-        endif
-
-    ZW0->(MsUnLock())
-
-Return .T.
-
-Static Function fGetSequen( lInclui as logical )
-
-    Local cRet := ""
-    Local cPrefixo := ""
-    Local lLock := .F.
-
-    Default lInclui := .F.
-
-    while !lLock
-
-        cPrefixo := AllTrim(ZW0->ZW0_PREFIX)
-        cSequen := AllTrim(Replace(ZW0->ZW0_SEQUEN,cPrefixo,""))
-
-        do case
-            case !lInclui ; cRet := cPrefixo + Soma1(cSequen)
-            case  lInclui ; cRet := cPrefixo + cSequen
-        endcase
-
-        if LockByName(cRet,.T.,.T.)
-
-            fGravaSequen(cRet)
-            UnLockByname(cRet,.T.,.T.)
-            lLock := .T.
-
-        endif
-
-    enddo
+    cRet := oSequence__:GetSequence()
 
 Return cRet
-
-Static Function fMaxDataBase() // nao considera a familia
-
-    Local cRet       := ""
-    Local cAlias     := ""
-    Local cTable     := ""
-    Local cFilSQL    := ""
-    Local cPrxFil    := ""
-    Local cMaxSQL    := ""
-    Local cTableSQL  := ""
-    Local cWhereSQL  := ""
-
-    Default cCampo_   := ""
-    Default cPrefixo_ := ""
-
-    if Empty(cCampo_) .Or. Empty(nTamCampo_) //.Or. Empty(cPrefixo_)
-        Return ""
-    endif
-
-    cCampo_ := AllTrim(cCampo_)
-    cPrefixo_ := AllTrim(cPrefixo_)
-
-    u_fOpenSX("SX3","SX3DIC")
-    DbSelectArea("SX3DIC")
-    SX3DIC->(DbSetOrder(2))
-    SX3DIC->(DbGoTop())
-    if !SX3DIC->(MsSeek(Upper(cCampo_)))
-        Return ""
-    endif
-
-    // Ontem o nome da tabela pronto para ser utilizado na consulta SQL
-    cTable := SX3DIC->X3_ARQUIVO // "SB1"
-    cTableSQL := "%"+RetSqlName(cTable)+"%" // %SB1%
-
-    // Obtem o campo filial
-    cPrxFil := Upper(cTable) // SB1
-    if SubStr(cPrxFil,1,1) == "S"
-        cPrxFil := SubStr(cPrxFil,2,2) // B1
-    endif
-    cFilSQL := cPrxFil + "_FILIAL"  // B1_FILIAL
-
-    // Gera comando MAX() do SQL
-    cMaxSQL := "%MAX(" + cCampo_ + ") %"
-
-    // Gera a cláusula Where do SQL
-    cWhereSQL := "%"
-    cWhereSQL += "TBL." + cFilSQL + " = '" + xFilial(cTable) + "' AND " // B1_FILIAL = ' ' AND
-    if !Empty(cPrefixo_)
-        cWhereSQL += "TBL." + cCampo_ + " LIKE '" + Upper(cPrefixo_) + "%' AND "  // B1_COD LIKE 'CHAPA%'
-    endif
-    cWhereSQL += "TBL.D_E_L_E_T_ = ' ' " // TBL.D_E_L_E_T_ = ' '
-    cWhereSQL += "%"
-
-    cAlias := GetNextAlias()
-
-    BeginSQL Alias cAlias
-
-        SELECT %exp:cMaxSQL% AS MAXSEQ
-        FROM %exp:cTableSQL% TBL // SB1010
-        WHERE %exp:cWhereSQL%
-
-    EndSQL
-
-    DbSelectArea(cAlias)
-
-    if !(cAlias)->(EOF()) .And. !Empty((cAlias)->MAXSEQ)
-
-        cRet := Replace((cAlias)->MAXSEQ,cPrefixo_) // "CHAPA0000000003" -> "0000000003"
-        cRet := Soma1(cRet)                         // "0000000003" -> "0000000004"
-        cRet := cPrefixo_+cRet                      // "CHAPA0000000004"
-
-    else
-
-        cRet := cPrefixo_+StrZero(1,nTamCampo_-Len(cPrefixo_))
-
-    endif
-
-    (cAlias)->(DbCloseArea())
-
-Return cRet
-
-Static Function fTamCampo(cCampo)
-    Local nRet := 0
-    nRet := TamSx3(cCampo)[1]
-Return nRet
-
-Static Function fGravaSequen(cSequen)
-    RecLock("ZW0",.F.)
-        ZW0->ZW0_SEQUEN := AllTrim(cSequen)
-    ZW0->(MsUnLock())
-Return

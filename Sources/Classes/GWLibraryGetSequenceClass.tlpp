@@ -1,15 +1,9 @@
 #include 'totvs.ch'
 #include "msobject.ch"
 
-#define CRLF chr(13)+chr(10)
-#define CRLF2 CRLF+CRLF
-
-using namespace Gworks.library.utils
-using namespace Gworks.library.functions
-
 namespace Gworks.library.classes
 
-Class GetSequence
+Class GWSequence
 
     // Public   : métodos/atributos disponíveis em qualquer lugar
     // Private  : métodos/atributos disponíveis apenas dentro da classe
@@ -25,88 +19,108 @@ Class GetSequence
     Protected Data cCampo     as character default ""
     Protected Data cPrefixo   as character default ""
     Protected Data cFamilia   as character default ""
-    Protected Data lReboot_    as logical   default .T.
+    Protected Data lReboot    as logical   default .T.
 
     Public Method New() Constructor
-    Public Method IncluiNovo as logical
+
+    Public Method GetSequence() as character
+
+    Private Method StartSequence() as logical
+    Private Method IncrementSequence( lInclui ) as character
+    Private Method GetMaxSequenceFromDataBase( cCampo, cPrefixo, nTamCampo ) as character
+    Private Method GetFieldLength() as numeric
+    Private Method CommitSequence()
 
 EndClass
 
 
-Method New( cArgCampo as character, cArgPrefixo as character, cArgFamilia as character, lArgReboot as logical ) Class GetSequence
+Method New( cArgCampo as character, cArgPrefixo as character, cArgFamilia as character, lArgReboot as logical ) Class GWSequence
 
     Default cArgCampo   := ""
     Default cArgPrefixo := Space(nLenPrefixo)
     Default cArgFamilia := Space(nLenFamilia) // nome da familia do campo
     Default lArgReboot  := .T. // atualiza o controle sequêncial com base no banco de dados
 
-    Self:aArea       := GetArea()
-    Self:nLenCampo   := TamSx3("ZW0_CAMPO" )[1]
-    Self:nLenPrefixo := TamSx3("ZW0_PREFIX")[1]
-    Self:nLenFamilia := TamSx3("ZW0_FAMI"  )[1]
-    Self:nLenSequen  := TamSx3("ZW0_SEQUEN")[1]
+    Self:nLenCampo   := TamSx3( "ZW0_CAMPO"  )[1]
+    Self:nLenPrefixo := TamSx3( "ZW0_PREFIX" )[1]
+    Self:nLenFamilia := TamSx3( "ZW0_FAMI"   )[1]
+    Self:nLenSequen  := TamSx3( "ZW0_SEQUEN" )[1]
     Self:cSequen     := ""
 
-    Self:cCampo     := cArgCampo
-    Self:cPrefixo   := cArgPrefixo
-    Self:cFamilia   := cArgFamilia
-    Self:lReboot_    := lArgReboot
+    Self:cCampo      := cArgCampo
+    Self:cPrefixo    := cArgPrefixo
+    Self:cFamilia    := cArgFamilia
+    Self:lReboot     := lArgReboot
 
-    if Empty(cCampo)
-        Return ""
+    if Empty(Self:cCampo)
+        Return Self
     endif
 
     Self:cCampo   := PadR( Self:cCampo  , nLenCampo  , " " )
     Self:cPrefixo := PadR( Self:cPrefixo, nLenPrefixo, " " )
     Self:cFamilia := PadR( Self:cFamilia, nLenFamilia, " " )
-    Self:cSequen  := PadR( Self:cSequen, nLenSequen , " " )
+    Self:cSequen  := PadR( Self:cSequen , nLenSequen , " " )
+
+Return Self
+
+
+Method GetSequence() Class GWSequence as character
+
+    Local lFound := .F. as logical
+
+    Self:aArea := GetArea()
 
     DbSelectArea("ZW0")
     ZW0->(DbSetOrder(1)) // ZW0_FILIAL+ZW0_FAMI+ZW0_CAMPO+ZW0_PREFIX
     ZW0->(DbGoTop())
+    if ZW0->(MsSeek(xFilial("ZW0")+Self:cFamilia+Self:cCampo+Self:cPrefixo))
+        lFound := .T.
+    endif
 
     BEGIN TRANSACTION
 
         do case
 
-            case ZW0->(MsSeek(xFilial("ZW0")+Self:cFamilia+Self:cCampo+Self:cPrefixo))
+            case lFound
 
-                Self:cSequen := Self:fGetSequen(.F.)
+                Self:cSequen := Self:IncrementSequence(.F.)
 
-            case Self:IncluiNovo
+            case !lFound .And. Self:StartSequence()
 
-                Self:cSequen := Self:fGetSequen(.T.)
+                Self:cSequen := Self:IncrementSequence(.T.)
 
         endcase
 
     END TRANSACTION
 
-    RestArea(aArea)
+    RestArea(Self:aArea)
 
-Return Self
+Return Self:cSequen
 
-Method IncluiNovo Class GetSequence as logical
 
-    Local nTamCampo_ := 0
+Method StartSequence() Class GWSequence as logical
 
-    nTamCampo_ := fTamCampo(cCampo_)
+    Local nTamCampo := 0   as numeric
+    Local cPrefixo  := ""  as character
 
-    if nTamCampo_ <= 0
+    nTamCampo := Self:GetFieldLength()
+
+    if nTamCampo <= 0
         Return .F.
     endif
 
     RecLock("ZW0",.T.)
 
         ZW0->ZW0_FILIAL := xFilial("ZW0")
-        ZW0->ZW0_FAMI   := cFamilia_ // ""
-        ZW0->ZW0_CAMPO  := cCampo_   // "B1_COD"
-        ZW0->ZW0_PREFIX := cPrefixo_ // "P2103"
-        cPrefixo_       := AllTrim(cPrefixo_)
+        ZW0->ZW0_FAMI   := Self:cFamilia // ""
+        ZW0->ZW0_CAMPO  := Self:cCampo   // "B1_COD"
+        ZW0->ZW0_PREFIX := Self:cPrefixo // "P2103"
+        cPrefixo        := AllTrim(Self:cPrefixo)
 
-        if lReboot_
-            ZW0->ZW0_SEQUEN := fMaxDataBase()
+        if Self:lReboot
+            ZW0->ZW0_SEQUEN := GetMaxSequenceFromDataBase(Self:cCampo, Self:cPrefixo, nTamCampo)
         else
-            ZW0->ZW0_SEQUEN := cPrefixo_+StrZero(1,nTamCampo_-Len(cPrefixo_)) // P21040001
+            ZW0->ZW0_SEQUEN := cPrefixo+StrZero(1,nTamCampo-Len(cPrefixo)) // P21040001
         endif
 
     ZW0->(MsUnLock())
@@ -114,3 +128,115 @@ Method IncluiNovo Class GetSequence as logical
 Return .T.
 
 
+Method IncrementSequence( lInclui as logical ) Class GWSequence as character
+
+    Local cRet      := ""  as character
+    Local cPrefixo  := ""  as character
+    Local cSequence := ""  as character
+    Local lLock     := .F. as logical
+
+    Default lInclui := .F.
+
+    while !lLock
+
+        cPrefixo  := AllTrim(ZW0->ZW0_PREFIX)
+        cSequence := AllTrim(Replace(ZW0->ZW0_SEQUEN,cPrefixo,""))
+
+        do case
+            case !lInclui ; cRet := cPrefixo + Soma1(cSequence)
+            case  lInclui ; cRet := cPrefixo + cSequence
+        endcase
+
+        if LockByName(cRet,.T.,.T.)
+            fGravaSequen(cRet)
+            UnLockByname(cRet,.T.,.T.)
+            lLock := .T.
+        endif
+
+    enddo
+
+Return cRet
+
+
+Method GetMaxSequenceFromDataBase( cCampo as character, cPrefixo as character, nTamCampo as numeric ) Class GWSequence as character // nao considera a familia
+
+    Local cRet       := "" as character
+    Local cAlias     := "" as character
+    Local cTable     := "" as character
+    Local cFilSQL    := "" as character
+    Local cPrxFil    := "" as character
+    Local cFieldSQL  := "" as character
+    Local cTableSQL  := "" as character
+    Local cWhereSQL  := "" as character
+
+    Default cCampo   := ""
+    Default cPrefixo := ""
+
+    if Empty(cCampo) .Or. Empty(nTamCampo) //.Or. Empty(Self:cPrefixo)
+        Return ""
+    endif
+
+    cCampo   := AllTrim(cCampo)
+    cPrefixo := AllTrim(cPrefixo)
+
+    u_fOpenSX("SX3","SX3DIC")
+    DbSelectArea("SX3DIC")
+    SX3DIC->(DbSetOrder(2))
+    SX3DIC->(DbGoTop())
+    if !SX3DIC->(MsSeek(Upper(cCampo)))
+        Return ""
+    endif
+
+    cTable := SX3DIC->X3_ARQUIVO // "SB1"
+    cPrxFil := Upper(cTable) // SB1
+    cPrxFil := if(SubStr(cPrxFil,1,1) == "S", SubStr(cPrxFil,2,2), cPrxFil) // B1
+    cFilSQL := cPrxFil + "_FILIAL"  // B1_FILIAL
+
+    cFieldSQL := "%MAX(" + cCampo + ") %"
+    cTableSQL := "%"+RetSqlName(cTable)+"%" // %SB1%
+    cWhereSQL := "%"
+    cWhereSQL += "TBL." + cFilSQL + " = '" + xFilial(cTable) + "' AND " // B1_FILIAL = ' ' AND
+    cWhereSQL += if(!Empty(cPrefixo), "TBL." + cCampo + " LIKE '" + Upper(cPrefixo) + "%' AND ", "") // B1_COD LIKE 'CHAPA%'
+    cWhereSQL += "TBL.D_E_L_E_T_ = ' ' "
+    cWhereSQL += "%"
+
+    cAlias := GetNextAlias()
+
+    BeginSQL Alias cAlias
+
+        SELECT %exp:cFieldSQL% as MAXSEQ
+        FROM %exp:cTableSQL% TBL // SB1010
+        WHERE %exp:cWhereSQL%
+
+    EndSQL
+
+    DbSelectArea(cAlias)
+
+    if !(cAlias)->(EOF()) .And. !Empty((cAlias)->MAXSEQ)
+
+        cRet := Replace( (cAlias)->MAXSEQ, cPrefixo ) // "CHAPA0000000003" -> "0000000003"
+        cRet := Soma1(cRet)                           // "0000000003" -> "0000000004"
+        cRet := cPrefixo+cRet                         // "CHAPA0000000004"
+
+    else
+
+        cRet := cPrefixo+StrZero(1,nTamCampo-Len(cPrefixo))
+
+    endif
+
+    (cAlias)->(DbCloseArea())
+
+Return cRet
+
+
+Method GetFieldLength() Class GWSequence as numeric
+    Local nRet := 0
+    nRet := TamSx3(Self:cCampo)[1]
+Return nRet
+
+
+Method CommitSequence() Class GWSequence
+    RecLock("ZW0",.F.)
+        ZW0->ZW0_SEQUEN := AllTrim(Self:cSequen)
+    ZW0->(MsUnLock())
+Return
