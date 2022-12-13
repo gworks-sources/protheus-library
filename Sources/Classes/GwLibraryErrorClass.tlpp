@@ -4,10 +4,10 @@
 #define CRLF chr(13)+chr(10)
 #define CRLF2 CRLF+CRLF
 
-using namespace Gworks.library.utils
+using namespace Gworks.Library.Utils
 using namespace Gworks.library.functions
 
-namespace Gworks.library.classes
+namespace Gworks.Library.Classes
 
 Class GwError From ErrorClass
 

@@ -1,6 +1,6 @@
 #include 'totvs.ch'
 
-namespace Gworks.library.utils
+namespace Gworks.Library.Utils
 
 /*/{Protheus.doc} fHelp
 Implementação da função Help para exibição de notificações ao usuário com tratativa para uso em rotinas MVC.

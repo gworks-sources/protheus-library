@@ -8,7 +8,7 @@
 #define FIELD_NAME 1
 #define FIELD_CONTENT 2
 
-namespace Gworks.library.utils
+namespace Gworks.Library.Utils
 
 /*/{Protheus.doc} GwDbInsertFromArray
 Insere registros em uma tabela do banco de dados

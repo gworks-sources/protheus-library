@@ -1,6 +1,6 @@
 #include "totvs.ch"
 
-namespace Gworks.library.data
+namespace Gworks.Library.Data
 
 User Function GwSeekByString(cAlias, cSeek, nOrdem, lFilialAuto, lRestArea, lCloseArea)
     Local lSeek := .F. as logical

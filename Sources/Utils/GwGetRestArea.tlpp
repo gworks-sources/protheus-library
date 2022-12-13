@@ -1,6 +1,6 @@
 #include "totvs.ch"
 
-namespace Gworks.library.utils
+namespace Gworks.Library.Utils
 
 User Function GwGetArea(aAlias,lAliasPrincipal)
     Local aAreas as array

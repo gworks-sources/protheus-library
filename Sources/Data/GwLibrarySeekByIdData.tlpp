@@ -1,8 +1,8 @@
 #include "totvs.ch"
 
-using namespace Gworks.library.utils
+using namespace Gworks.Library.Utils
 
-namespace Gworks.library.data
+namespace Gworks.Library.Data
 
 // ex. bdound - { |x| "MinhaChaveParaValidacao" == x }
 User Function GwSeekById(cAlias, nId, bFound, nIndexFound)

@@ -1,7 +1,7 @@
 #include "totvs.ch"
 
-using namespace Gworks.library.classes
-using namespace Gworks.library.utils
+using namespace Gworks.Library.Classes
+using namespace Gworks.Library.Utils
 
 namespace Gworks.library.functions
 

@@ -1,8 +1,8 @@
 #include "totvs.ch"
 
-using namespace Gworks.library.classes
+using namespace Gworks.Library.Classes
 
-namespace Gworks.library.utils
+namespace Gworks.Library.Utils
 
 User Function GwGetFile(xFileType,lSaveDialog,lMemoRead,cDirectory)
 

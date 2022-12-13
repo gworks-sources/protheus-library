@@ -1,8 +1,8 @@
 #include "protheus.ch"
 
-using namespace Gworks.library.classes
+using namespace Gworks.Library.Classes
 
-namespace Gworks.library.utils
+namespace Gworks.Library.Utils
 
 Static oSequence__ := nil as object
 

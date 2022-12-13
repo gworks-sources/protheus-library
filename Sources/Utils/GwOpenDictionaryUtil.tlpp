@@ -1,6 +1,6 @@
 #Include "protheus.ch"
 
-namespace Gworks.library.utils
+namespace Gworks.Library.Utils
 
 /*/{Protheus.doc} OpenSX
 Manipula arquivos do dicionário de dados referente às tabelas de metadados SX1, SX2 e SX3.
