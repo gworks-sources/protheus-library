@@ -1,0 +1,43 @@
+#include "totvs.ch"
+#include "tlpp-core.th"
+#include "tlpp-rest.th"
+
+#define client_secret 'secret'
+#define client_access_expires 3600
+#define client_refresh_expires Date()+1
+#define client_id 'tlpprest'
+#define client_oAuth2_user 'tlpprest'
+#define client_oAuth2_password 'tlpprest'
+
+/*/{Protheus.doc} oAuth2GetParameters
+Carrega as propriedades que serão utilizadas na geração dos tokens(access/refresh) e na validação de acesso de requisições Rest em TLPP.
+@type function
+@version 12.1.33
+@author Gworks - Giovani Soares
+@since 22/08/2022
+@param jParams, json, json object que será atualizado com os parâmetros definidos na função.
+@return logical, se .T. operação realizada com sucesso e .F. com falhas.
+@obs Documentação de referência
+    https://tdn.totvs.com/display/tec/onAuthparams
+/*/
+User Function oAuth2GetParameters(jParams)
+
+	Local jCliente := { "client_id" : client_id ,; // string
+                        "client_secret" : client_secret,; // string
+                        "username" : client_oAuth2_user ,; // string
+                        "password" : client_oAuth2_password ,; // string
+                        "grant_type" : "password",; //string este conteúdo deve ser fixo por enquanto
+                        "access_expires" : client_access_expires,; //integer tempo em milissegundos
+                        "refresh_expires" : client_refresh_expires,; // ou para o caso de data fixa, o formato de data: "mm/dd/yyyy" -> "12/31/2021"
+                        "JWTRoutes" : {} } as json //parametro opcional momentâneamente.
+
+	//obtendo as propriedades da variável JSon criadas acima para poder popular o objeto nativo jParams que é passado por referencia.
+	Local aProps := jCliente:GetNames() as array
+
+	//Adicionando as propriedades não existentes no objeto nativo jParams
+	//Aqui deve-se ficar atento para que todas as propriedades tenham os seus valores carregados, mesmo quando não estejam presentes no objeto recebido(jParams).
+	aEval(aProps,{|x,y| iIf(!(jParams:hasProperty(x)), jParams[x] := jCliente[x],'')})
+
+    ConOut("##### oAuth2GetParameters #####")
+
+Return .T.

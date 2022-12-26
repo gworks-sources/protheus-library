@@ -1,0 +1,22 @@
+#include "totvs.ch"
+#include "tlpp-core.th"
+#include "tlpp-rest.th"
+
+/*/{Protheus.doc} u_noCheckUri
+URI's que não devem ser validadas quando o protocolo oAuth2 estiver ativado.
+Se o valor desta chave não for declarada, todas as requisições passarão pela função de validação de access tokens informada na key onAuth.
+@type function
+@version 12.1.33
+@author Gworks - Giovani Soares
+@since 22/08/2022
+@return array, lista de URI's.
+/*/
+User Function oAuth2NoCheckUri()
+
+  Local aRet := {} as array
+
+  aAdd(aRet,'/test/oauth2/nocheckeduri')
+
+  ConOut("##### oAuth2NoCheckUri #####")
+
+return aRet

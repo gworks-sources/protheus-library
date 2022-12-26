@@ -1,0 +1,38 @@
+#include 'tlpp-core.th'
+#include 'tlpp-rest.th'
+
+Class RestTlppSampleHelloWord
+
+	public data cReturn as character
+
+	public method new()
+
+	@Get("/test/RestTlppSampleHelloWord")
+	@Get("/test/RestTlppSampleHelloWord/:param1")
+	@Get("/test/RestTlppSampleHelloWord/:param1/:param2")
+	public Method sayHello() as logical
+
+EndClass
+
+Method new() Class RestTlppSampleHelloWord
+
+	::cReturn := "Meu primeiro REST em TL++"
+
+Return self
+
+Method sayHello() as logical Class RestTlppSampleHelloWord
+
+	Local jPath := {} as json
+
+	jPath := oRest:getPathParamsRequest()
+
+	if jPath:HasProperty("param1")
+		ConOut("##### Param1 "+ jPath["param1"] +" #####")
+	endif
+	if jPath:HasProperty("param2")
+		ConOut("##### Param2 "+ jPath["param2"] +" #####")
+	endif
+
+	oRest:setResponse(::cReturn)
+
+Return .T.
