@@ -5,7 +5,7 @@
 #define CRLF2 CRLF+CRLF
 
 using namespace Gworks.Library.Utils
-using namespace Gworks.library.functions
+using namespace Gworks.library.Functions
 
 namespace Gworks.Library.Classes
 
