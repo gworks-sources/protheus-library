@@ -5,7 +5,7 @@
 #define CRLF2 CRLF+CRLF
 
 using namespace Gworks.Library.Utils
-using namespace Gworks.library.functions
+using namespace Gworks.library.Functions
 
 namespace Gworks.Library.Classes
 
@@ -13,7 +13,7 @@ Class GwDataAccess
 
     Public Data cAlias      as character default ""
     Public Data aAliasArea  as array default {}
-    Public Data aSavedAreas as array
+    Public Data aSavedAreas as array default {}
 
     Public Method New() Constructor
     Public Method SelectArea()
@@ -22,6 +22,7 @@ Class GwDataAccess
     Public Method GoTop()
     Public Method GoBottom()
     Public Method GoRecno()
+    Public Method SkipLine()
     Public Method Seek()
     Public Method SaveAliasArea()
     Public Method RestAliasArea()
@@ -31,6 +32,7 @@ Class GwDataAccess
     Public Method ClearSavedAreas()
     Public Method EvalByCondition()
     Public Method GetValue()
+    Public Method EndOfLine()
 
 EndClass
 
@@ -118,6 +120,17 @@ Method GoRecno( nRecno as numeric ) Class GwDataAccess
         (cAlias)->(DbGoTo(nRecno))
 
     endif
+
+Return
+
+
+Method SkipLine() Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+    (cAlias)->(DbSkip())
 
 Return
 
@@ -264,3 +277,15 @@ Method GetValue( cName as character ) Class GwDataAccess
     endif
 
 Return xRet
+
+
+Method EndOfLine() Class GwDataAccess
+
+    Local cAlias := ""  as character
+    Local lRet   := .F. as logical
+
+    cAlias := Self:cAlias
+
+    lRet := (cAlias)->(EOF())
+
+Return lRet

@@ -1,0 +1,61 @@
+#include "totvs.ch"
+
+namespace Gworks.Sample.Classes
+
+Class DataAccessSample From GwDataAccess
+
+    Public Data aQuery as array default {}
+    Public Data cAlias as character default ""
+
+    Public Method New() Constructor
+
+EndClass
+
+Method New() Class DataAccessSample
+
+    Local cAlias := "" as character
+
+    cAlias := GetNextQuery()
+
+    BeginSQL Alias cAlias
+
+        SELECT TOP 200
+            SB1.B1_FILIAL
+            ,SB1.B1_COD
+            ,SB1.B1_DESC
+            ,SB1.B1_UM
+            ,SB1.B1_TIPO
+        FROM %table:SB1% SB1
+        WHERE SB1.%notDel%
+
+    EndSQL
+
+    _Super:New(cAlias)
+
+    Self:cAlias := cAlias
+    Self:aQuery := GetLastQuery
+
+Return Self
+
+User Function GwDataAccessExecute()
+
+    Local oDicProdutos := nil as object
+    Local oQryProdutos := nil as object
+
+    oDicProdutos := GwDataAccess():New("SB1")
+    oDicProduto:SaveAliasArea()
+    oDicProduto:SaveAreas({"SA1","SC5","SC6"})
+        // processamento...
+    oDicProduto:RestAliasArea()
+    oDicProduto:RestoreSavedAreas()
+
+    oQryProdutos := DataAccessSample():New()
+    oQryProdutos:GoTop()
+    while oQryProdutos:EndOfLine() ;
+        .And. oQryProdutos:GetValue("B1_FILIAL") == xFilial("SB1") ;
+        .And. oQryProdutos:GetValue("B1_TIPO") > ' '
+            // processamento
+        oQryProdutos:SkipLine()
+    enddo
+
+Return
