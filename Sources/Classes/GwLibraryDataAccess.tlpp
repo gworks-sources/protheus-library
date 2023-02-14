@@ -13,7 +13,8 @@ Class GwDataAccess
 
     Public Data cAlias      as character default ""
     Public Data aAliasArea  as array default {}
-    Public Data aSavedAreas as array default {}
+    Public Data aOtherAreas as array default {}
+    Public Data aQuery      as array default {}
 
     Public Method New() Constructor
     Public Method SelectArea()
@@ -24,12 +25,12 @@ Class GwDataAccess
     Public Method GoRecno()
     Public Method SkipLine()
     Public Method Seek()
-    Public Method SaveAliasArea()
-    Public Method RestAliasArea()
-    Public Method ClearAliasArea()
-    Public Method SaveAreas()
-    Public Method RestoreSavedAreas()
-    Public Method ClearSavedAreas()
+    Public Method SaveArea()
+    Public Method SaveOtherAreas()
+    Public Method RestoreArea()
+    Public Method RestoreOtherAreas()
+    Public Method EraseArea()
+    Public Method EraseOtherAreas()
     Public Method EvalByCondition()
     Public Method GetValue()
     Public Method EndOfLine()
@@ -39,9 +40,9 @@ EndClass
 
 Method New(cAlias as character) Class GwDataAccess
 
-    Self:cAlias := cAlias
-    Self:aAliasArea := {}
-    Self:aSavedAreas := {}
+    Self:cAlias      := cAlias
+    Self:aAliasArea  := {}
+    Self:aOtherAreas := {}
 
 Return Self
 
@@ -146,21 +147,23 @@ Method Seek( cKey as character ) Class GwDataAccess
 
         cAlias := Self:cAlias
 
-        (cAlias)->(MsSeek(cKey))
+        if (cAlias)->(MsSeek(cKey))
+            lRet := .T.
+        endif
 
     endif
 
 Return lRet
 
 
-Method SaveAliasArea() Class GwDataAccess
+Method SaveArea() Class GwDataAccess
 
     Local cAlias := "" as character
 
     cAlias := Self:cAlias
 
     if !Empty(Self:aAliasArea)
-        Self:ClearAliasArea()
+        Self:EraseArea()
     endif
 
     Self:aAliasArea := (cAlias)->(GetArea())
@@ -168,23 +171,7 @@ Method SaveAliasArea() Class GwDataAccess
 Return
 
 
-Method RestAliasArea() Class GwDataAccess
-
-    RestArea(Self:aAliasArea)
-
-Return
-
-
-Method ClearAliasArea() Class GwDataAccess
-
-    FwFreeArray(Self:aAliasArea)
-
-    Self:aAliasArea := {}
-
-Return
-
-
-Method SaveAreas( aNames as array ) Class GwDataAccess
+Method SaveOtherAreas( aNames as array ) Class GwDataAccess
 
     Local aAreas := {} as array
     Local cAlias := "" as character
@@ -200,45 +187,73 @@ Method SaveAreas( aNames as array ) Class GwDataAccess
 
     next
 
-    Self:aSavedAreas := aClone(aAreas)
+    Self:aOtherAreas := aClone(aAreas)
 
 Return
 
 
-Method RestoreSavedAreas( cName as character ) Class GwDataAccess
+Method RestoreArea() Class GwDataAccess
+
+    RestArea(Self:aAliasArea)
+
+Return
+
+
+Method RestoreOtherAreas( cNames as character ) Class GwDataAccess
 
     Local aAreas := {} as array
+    Local cName  := "" as character
+    Local cToken := "" as character
     Local nI     := 0  as numeric
+    Local nJ     := 0  as numeric
     Local nPos   := 0  as numeric
 
-    Default cName := ""
+    Default cNames := ""
 
-    if !Empty(cName)
-        nPos := aScan(Self:aSavedAreas, {|x| x[1]==cName})
+    if Empty(cNames)
+        Return
     endif
 
-    for nI:=1 to Len(Self:aSavedAreas)
+    cToken := ";"
 
-        if nPos > 0 .And. nI != nPos
-            loop
+    aNames := if( at(cNames,cToken) > 0, StrToKarr(cNames,cToken), { cNames } )
+
+    For nI:=1 to Len(aNames)
+
+        cName := aNames[nI]
+
+        if !Empty(cName)
+            nPos := aScan(Self:aOtherAreas, {|x| x[1]==cName})
         endif
 
-        aAreas := Self:aSavedAreas[nI]
+        for nJ:=1 to Len(Self:aOtherAreas)
 
-        RestArea(aAreas[nI])
+            if nPos > 0 .And. nJ != nPos
+                loop
+            endif
 
-    next
+            aAreas := Self:aOtherAreas[nJ]
 
-    Self:ClearSavedAreas()
+            RestArea(aAreas[nJ])
+
+        next nJ
+
+    next nI
+
+Return
+
+Method EraseArea() Class GwDataAccess
+
+    FwFreeArray(Self:aAliasArea)
+    Self:aAliasArea := {}
 
 Return
 
 
-Method ClearSavedAreas() Class GwDataAccess
+Method EraseOtherAreas() Class GwDataAccess
 
-    FwFreeArray(Self:aSavedAreas)
-
-    Self:aSavedAreas := {}
+    FwFreeArray(Self:aOtherAreas)
+    Self:aOtherAreas := {}
 
 Return
 
@@ -281,11 +296,4 @@ Return xRet
 
 Method EndOfLine() Class GwDataAccess
 
-    Local cAlias := ""  as character
-    Local lRet   := .F. as logical
-
-    cAlias := Self:cAlias
-
-    lRet := (cAlias)->(EOF())
-
-Return lRet
+Return (Self:cAlias)->(EOF())
