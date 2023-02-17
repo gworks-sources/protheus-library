@@ -34,6 +34,7 @@ Class GwDataAccess
     Public Method EvalByCondition()
     Public Method GetValue()
     Public Method EndOfLine()
+    Public Method TotalLines()
 
 EndClass
 
@@ -297,3 +298,16 @@ Return xRet
 Method EndOfLine() Class GwDataAccess
 
 Return (Self:cAlias)->(EOF())
+
+
+Method TotalLines() Class GwDataAccess
+
+    Local cAlias := "" as character
+    Local nTotal := 0  as numeric
+
+    cAlias := Self:cAlias
+    nTotal := Contar(cAlias,"!EOF()")
+
+    (cAlias)->(DbGoTop())
+
+Return nTotal
