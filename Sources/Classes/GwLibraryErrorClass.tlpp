@@ -18,26 +18,32 @@ Class GwError From ErrorClass
     Public Data lError as logical default .F.
     Public Data lCanReplaced as logical default .T.
 
-    Public Method New() Constructor
-    Public Method Create() Constructor
-    Public Method SetError()
-    Public Method GetErrorByName()
-    Public Method HasError()
-    Public Method ShowError()
-    Public Method SetAutoGRLog()
-    Public Method SetAutoGRLogFromArray()
-    Public Method ShowAutoGRLog()
-    Public Method DefineWithError()
-    Public Method SetCanReplaced()
+    Public Method New() Constructor // construtor com argumentos
+    Public Method Create() Constructor // construtor vazio
+    Public Method SetError() // define a mensagem de erro desejada
+    Public Method GetErrorByName() // retorna a mensagem de erro conforme sua definição em: "ERROR", "SUGGESTION", "TITLEERROR"
+    Public Method DefineWithError() // define que a instância da classe foi definida com erro
+    Public Method HasError() // indica que a instância da classe GwError foi definida como erro
+    Public Method ShowError() // exibe a mensagem de erro entre: "INFO", "STOP", "ALERT", "HELP"
+    Public Method SetAutoGRLog() // define a mensagem para exibição via função MostraErro()
+    Public Method SetAutoGRLogFromArray() // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
+    Public Method ShowAutoGRLog() // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
+    Public Method SetCanReplaced() // flag auxiliar para definir se a mensagem de erro definida na instância da classe pode ou não ser substituída
+
+    Protected Method SetHelp()
 
 EndClass
 
-Method New(cError,cSuggestion,cTitleError,lError) Class GwError; :New()
+Method New(cError,cSuggestion,cTitleError,lError,lShowError,cOption) Class GwError; :New()
     Default cError := ""
     Default cSuggestion := ""
     Default cTitleError := ""
     Default lError := .T.
+    Default lShowError := .F.
     Self:SetError(cError,cSuggestion,cTitleError,lError)
+    if lShowError
+        Self:ShowError(cOption)
+    endif
 Return Self
 
 Method Create() Class GwError; :New()
@@ -81,13 +87,13 @@ Method ShowError(cOption,cTitle,lShowAutoGRLog,lDefineWithError,lUpdateErrorClas
     Default lUpdateErrorClass := .T.
     If !Empty(::cSuggestion)
         cShowError += CRLF2
-        cShowError += ::cSuggestion
+        cShowError += ::cSuggestion // TODO:revisar..
     EndIf
     Do Case
         Case cOption == "INFO"  ; FwAlertInfo(cShowError,cTitle)
         Case cOption == "STOP"  ; FwAlertError(cShowError,cTitle)
         Case cOption == "ALERT" ; FwAlertWarning(cShowError,cTitle)
-        Case cOption == "HELP"  ; u_GwHelp(cTitle,::cError,::cSuggestion)
+        Case cOption == "HELP"  ; SetHelp(cTitle,::cError,::cSuggestion)
     EndCase
     If !Empty(::cAutoGRLog) .And. lShowAutoGRLog
         ::ShowAutoGRLog()
@@ -135,4 +141,22 @@ Return
 Method SetCanReplaced(lReplaced) Class GwError
     Default lReplaced := .T.
     ::lCanReplaced := lReplaced
+Return
+
+Method SetHelp(cTit,cErro,cSolucao,oModel) Class GwError
+    Default cTit     := ""
+    Default cErro    := ""
+    Default cSolucao := ""
+    Default oModel   := nil
+    If ValType(oModel) == "O" .And. oModel:ClassName() == "FWFORMMODEL"
+        oModel:SetErrorMessage( nil,;
+                                nil,;
+                                nil,;
+                                nil,;
+                                iif(!Empty(cTit),cTit,"Modelo/operação inválidos"),;
+                                iif(!Empty(cErro),cErro,"Não foi possível validar o modelo de dados e/ou a operação realizada."),;
+                                iif(!Empty(cSolucao),cSolucao,"Favor entrar em contato com o suporte técnico." ) )
+    Else
+        Help(nil, nil, cTit, nil, cErro, 1, 0, nil, nil, nil, nil, nil, {cSolucao})
+    EndIf
 Return
