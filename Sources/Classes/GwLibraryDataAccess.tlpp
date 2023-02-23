@@ -15,6 +15,7 @@ Class GwDataAccess
     Public Data aAliasArea  as array default {}
     Public Data aOtherAreas as array default {}
     Public Data aQuery      as array default {}
+    Public Data lOppened    as logical default .F.
 
     Public Method New() Constructor
     Public Method SelectArea()
@@ -25,6 +26,7 @@ Class GwDataAccess
     Public Method GoRecno()
     Public Method SkipLine()
     Public Method Seek()
+    Public Method SeekAutoFilial()
     Public Method SaveArea()
     Public Method SaveOtherAreas()
     Public Method RestoreArea()
@@ -36,6 +38,9 @@ Class GwDataAccess
     Public Method EndOfLine()
     Public Method NotEndOfLine()
     Public Method TotalLines()
+    Public Method Oppened()
+    Public Method CloseArea()
+    Public Method ReleaseArea()
 
 EndClass
 
@@ -43,7 +48,8 @@ EndClass
 Method New(cAlias as character) Class GwDataAccess
 
     Self:cAlias      := cAlias
-    Self:aAliasArea  := {}
+    Self:lOppened    := Select(cAlias) > 0
+    Self:aAliasArea  := if( ::lOppened, (cAlias)->(GetArea()), {} )
     Self:aOtherAreas := {}
 
 Return Self
@@ -158,6 +164,15 @@ Method Seek( cKey as character ) Class GwDataAccess
 Return lRet
 
 
+Method SeekAutoFilial( cKey as character ) Class GwDataAccess
+
+    Default cKey := ""
+
+    ::Seek(xFilial(::cAlias)+cKey)
+
+Return
+
+
 Method SaveArea() Class GwDataAccess
 
     Local cAlias := "" as character
@@ -244,6 +259,7 @@ Method RestoreOtherAreas( cNames as character ) Class GwDataAccess
 
 Return
 
+
 Method EraseArea() Class GwDataAccess
 
     FwFreeArray(Self:aAliasArea)
@@ -317,3 +333,33 @@ Method TotalLines() Class GwDataAccess
     (cAlias)->(DbGoTop())
 
 Return nTotal
+
+
+Method Oppened() Class GwDataAccess
+
+Return ::lOppened
+
+
+Method CloseArea() Class GwDataAccess
+
+    Local cAlias := ""  as character
+
+    cAlias := Self:cAlias
+
+    (cAlias)->(DbCloseArea())
+
+Return
+
+
+Method ReleaseArea() Class GwDataAccess
+
+    Local cAlias := ""  as character
+
+    cAlias := Self:cAlias
+
+    do case
+        case  ::lOppened ; ::RestArea()
+        case !::lOppened ; ::CloseArea()
+    endcase
+
+Return
