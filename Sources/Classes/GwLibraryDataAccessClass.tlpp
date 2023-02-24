@@ -1,0 +1,375 @@
+#include "TOTVS.ch"
+#include "MsObject.ch"
+
+#define CRLF chr(13)+chr(10)
+#define CRLF2 CRLF+CRLF
+
+using namespace Gworks.Library.Utils
+using namespace Gworks.library.Functions
+
+namespace Gworks.Library.Classes
+
+Class GwDataAccess
+
+    Public Data cAlias      as character default ""
+    Public Data aAliasArea  as array default {}
+    Public Data aOtherAreas as array default {}
+    Public Data aQuery      as array default {}
+    Public Data lOppened    as logical default .F.
+
+    Public Method New() Constructor
+    Public Method SelectArea()
+    Public Method SetOrder()
+    Public Method RetIndexOrder()
+    Public Method GoTop()
+    Public Method GoBottom()
+    Public Method GoToRecno()
+    Public Method SkipLine()
+    Public Method Seek()
+    Public Method SeekAutoFilial()
+    Public Method SaveArea()
+    Public Method SaveOtherAreas()
+    Public Method RestoreArea()
+    Public Method RestoreOtherAreas()
+    Public Method EraseArea()
+    Public Method EraseOtherAreas()
+    Public Method EvalByCondition()
+    Public Method GetValue()
+    Public Method EndOfLines()
+    Public Method NotEndOfLines()
+    Public Method TotalLines()
+    Public Method Oppened()
+    Public Method CloseArea()
+    Public Method ReleaseArea()
+    Public Method GetRecnoId()
+
+EndClass
+
+
+Method New(cAlias as character) Class GwDataAccess
+
+    Self:cAlias      := cAlias
+    Self:lOppened    := Select(cAlias) > 0
+    Self:aAliasArea  := if( ::lOppened, (cAlias)->(GetArea()), {} )
+    Self:aOtherAreas := {}
+
+Return Self
+
+
+Method SelectArea() Class GwDataAccess
+
+    DbSelectArea(Self:cAlias)
+
+Return
+
+
+Method SetOrder( xOrder as variant ) Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+    do case
+        case Val(xOrder) == 'N' ; (cAlias)->(DbSetOrder(xOrder))
+
+        case Val(xOrder) == "C" ; (cAlias)->(RetOrder(,xOrder))
+
+        otherwise
+            UserException("GwDataAccess:SetOrder - Argumentos inválidos!")
+    endcase
+
+    (cAlias)->(DbGoTop())
+
+Return
+
+
+Method RetIndexOrder() Class GwDataAccess
+
+    Local cAlias := "" as character
+    Local nOrder := 0 as numeric
+
+    cAlias := Self:cAlias
+
+    nOrder := (cAlias)->(IndexOrd())
+
+Return nOrder
+
+
+Method GoTop() Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+    (cAlias)->(DbGoTop())
+
+Return
+
+
+Method GoBottom() Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+    (cAlias)->(DbGoBottom())
+
+Return
+
+
+Method GoToRecno( nRecno as numeric ) Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    Default nRecno := 0
+
+    if nRecno > 0
+
+        cAlias := Self:cAlias
+
+        (cAlias)->(DbGoTo(nRecno))
+
+    endif
+
+Return
+
+
+Method SkipLine() Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+    (cAlias)->(DbSkip())
+
+Return
+
+
+Method Seek( cKey as character ) Class GwDataAccess
+
+    Local cAlias := ""  as character
+    Local lRet   := .F. as logical
+
+    Default cKey := ""
+
+    if !Empty(cKey)
+
+        cAlias := Self:cAlias
+
+        if (cAlias)->(MsSeek(cKey))
+            lRet := .T.
+        endif
+
+    endif
+
+Return lRet
+
+
+Method SeekAutoFilial( cKey as character ) Class GwDataAccess
+
+    Default cKey := ""
+
+    ::Seek(xFilial(::cAlias)+cKey)
+
+Return
+
+
+Method SaveArea() Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+    if !Empty(Self:aAliasArea)
+        Self:EraseArea()
+    endif
+
+    Self:aAliasArea := (cAlias)->(GetArea())
+
+Return
+
+
+Method SaveOtherAreas( aNames as array ) Class GwDataAccess
+
+    Local aAreas := {} as array
+    Local cAlias := "" as character
+    Local nI     := 0  as numeric
+
+    Default aNames := {}
+
+    for nI:=1 to Len(aNames)
+
+        cAlias := aNames[nI]
+
+        aAdd( aAreas, (cAlias)->(GetArea()) )
+
+    next
+
+    Self:aOtherAreas := aClone(aAreas)
+
+Return
+
+
+Method RestoreArea() Class GwDataAccess
+
+    RestArea(Self:aAliasArea)
+
+Return
+
+
+Method RestoreOtherAreas( cNames as character ) Class GwDataAccess
+
+    Local aAreas := {} as array
+    Local cName  := "" as character
+    Local cToken := "" as character
+    Local nI     := 0  as numeric
+    Local nJ     := 0  as numeric
+    Local nPos   := 0  as numeric
+
+    Default cNames := ""
+
+    if Empty(cNames)
+        Return
+    endif
+
+    cToken := ";"
+
+    aNames := if( at(cNames,cToken) > 0, StrToKarr(cNames,cToken), { cNames } )
+
+    For nI:=1 to Len(aNames)
+
+        cName := aNames[nI]
+
+        if !Empty(cName)
+            nPos := aScan(Self:aOtherAreas, {|x| x[1]==cName})
+        endif
+
+        for nJ:=1 to Len(Self:aOtherAreas)
+
+            if nPos > 0 .And. nJ != nPos
+                loop
+            endif
+
+            aAreas := Self:aOtherAreas[nJ]
+
+            RestArea(aAreas[nJ])
+
+        next nJ
+
+    next nI
+
+Return
+
+
+Method EraseArea() Class GwDataAccess
+
+    FwFreeArray(Self:aAliasArea)
+    Self:aAliasArea := {}
+
+Return
+
+
+Method EraseOtherAreas() Class GwDataAccess
+
+    FwFreeArray(Self:aOtherAreas)
+    Self:aOtherAreas := {}
+
+Return
+
+
+Method EvalByCondition( bExec as codeblock, bCondition as codeblock ) Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    Default bExec := {|| }
+    Default bCondition := {|| }
+
+    if !Empty(bExec) .And. !Empty(bCondition)
+
+        cAlias := Self:cAlias
+
+        (cAlias)->( DbEval( bExec, nil, bCondition ) )
+
+    endif
+
+Return
+
+
+Method GetValue( cName as character ) Class GwDataAccess
+
+    Local cAlias := ""  as character
+    Local xRet   := nil as variant
+
+    Default cName := ""
+
+    if !Empty(cName)
+
+        cAlias := Self:cAlias
+
+        xRet := (cAlias)->&cName
+
+    endif
+
+Return xRet
+
+
+Method EndOfLines() Class GwDataAccess
+
+Return (Self:cAlias)->(EOF())
+
+
+Method NotEndOfLines() Class GwDataAccess
+
+Return !(Self:cAlias)->(EOF())
+
+
+Method TotalLines() Class GwDataAccess
+
+    Local cAlias := "" as character
+    Local nTotal := 0  as numeric
+
+    cAlias := Self:cAlias
+    nTotal := Contar(cAlias,"!EOF()")
+
+    (cAlias)->(DbGoTop())
+
+Return nTotal
+
+
+Method Oppened() Class GwDataAccess
+
+Return ::lOppened
+
+
+Method CloseArea() Class GwDataAccess
+
+    Local cAlias := ""  as character
+
+    cAlias := Self:cAlias
+
+    (cAlias)->(DbCloseArea())
+
+Return
+
+
+Method ReleaseArea() Class GwDataAccess
+
+    Local cAlias := ""  as character
+
+    cAlias := Self:cAlias
+
+    do case
+        case  ::lOppened ; ::RestArea()
+        case !::lOppened ; ::CloseArea()
+    endcase
+
+Return
+
+
+Method GetRecnoId() Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+Return (cAlias)->(Recno())

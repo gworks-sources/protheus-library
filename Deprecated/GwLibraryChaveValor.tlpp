@@ -1,0 +1,27 @@
+#include "TOTVS.ch"
+#include "MsObject.ch"
+
+#define CRLF chr(13)+chr(10)
+#define CRLF2 CRLF+CRLF
+
+using namespace Gworks.Library.Utils
+using namespace Gworks.library.Functions
+
+namespace Gworks.Library.Classes
+
+Class GWChaveValor
+
+    Public Data cChave as character
+    Public Data xValor as variant
+
+    Public Method New() Constructor
+
+EndClass
+
+Method New(cChave as character, xValor as variant) Class GWChaveValor
+
+    Self:cChave := cChave
+    Self:xValor := xValor
+
+Return Self
+
