@@ -23,7 +23,7 @@ Class GwDataAccess
     Public Method RetIndexOrder()
     Public Method GoTop()
     Public Method GoBottom()
-    Public Method GoRecno()
+    Public Method GoToRecno()
     Public Method SkipLine()
     Public Method Seek()
     Public Method SeekAutoFilial()
@@ -117,7 +117,7 @@ Method GoBottom() Class GwDataAccess
 Return
 
 
-Method GoRecno( nRecno as numeric ) Class GwDataAccess
+Method GoToRecno( nRecno as numeric ) Class GwDataAccess
 
     Local cAlias := "" as character
 
