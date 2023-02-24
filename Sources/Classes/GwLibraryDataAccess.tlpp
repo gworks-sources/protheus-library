@@ -41,6 +41,7 @@ Class GwDataAccess
     Public Method Oppened()
     Public Method CloseArea()
     Public Method ReleaseArea()
+    Public Method GetRecnoId()
 
 EndClass
 
@@ -363,3 +364,12 @@ Method ReleaseArea() Class GwDataAccess
     endcase
 
 Return
+
+
+Method GetRecnoId() Class GwDataAccess
+
+    Local cAlias := "" as character
+
+    cAlias := Self:cAlias
+
+Return (cAlias)->(Recno())
