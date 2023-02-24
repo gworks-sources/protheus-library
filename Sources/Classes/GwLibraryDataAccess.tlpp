@@ -35,8 +35,8 @@ Class GwDataAccess
     Public Method EraseOtherAreas()
     Public Method EvalByCondition()
     Public Method GetValue()
-    Public Method EndOfLine()
-    Public Method NotEndOfLine()
+    Public Method EndOfLines()
+    Public Method NotEndOfLines()
     Public Method TotalLines()
     Public Method Oppened()
     Public Method CloseArea()
@@ -313,12 +313,12 @@ Method GetValue( cName as character ) Class GwDataAccess
 Return xRet
 
 
-Method EndOfLine() Class GwDataAccess
+Method EndOfLines() Class GwDataAccess
 
 Return (Self:cAlias)->(EOF())
 
 
-Method NotEndOfLine() Class GwDataAccess
+Method NotEndOfLines() Class GwDataAccess
 
 Return !(Self:cAlias)->(EOF())
 
