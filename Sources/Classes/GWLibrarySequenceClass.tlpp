@@ -3,7 +3,7 @@
 
 namespace Gworks.Library.Classes
 
-Class GWSequence
+Class GwSequence
 
     // Public   : métodos/atributos disponíveis em qualquer lugar
     // Private  : métodos/atributos disponíveis apenas dentro da classe

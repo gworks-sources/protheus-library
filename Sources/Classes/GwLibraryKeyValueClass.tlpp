@@ -9,7 +9,7 @@ using namespace Gworks.library.Functions
 
 namespace Gworks.Library.Classes
 
-Class KeyValue
+Class GwKeyValue
 
     Public Data aKeyValue as array default {}
 
