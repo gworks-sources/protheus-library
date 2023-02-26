@@ -1,0 +1,58 @@
+#include "TOTVS.ch"
+#include "MsObject.ch"
+
+#define CRLF chr(13)+chr(10)
+#define CRLF2 CRLF+CRLF
+
+using namespace Gworks.Library.Utils
+using namespace Gworks.library.Functions
+
+namespace Gworks.Library.Classes
+
+Class KeyValue
+
+    Public Data aKeyValue as array default {}
+
+    Public Method New() Constructor
+    Public Method Add()
+    Public Method GetAllValues()
+    Public Method GetValueByKey()
+
+EndClass
+
+
+Method New() Class KeyValue
+
+    Self:aKeyValue := {}
+
+Return Self
+
+
+Method Add( cKey as character, xValue as variant ) Class KeyValue
+
+    aAdd(::aKeyValue, { cKey, xValue })
+
+Return
+
+
+Method GetValueByKey( xSearch as variant ) Class KeyValue
+
+    Local nPos := 0 as numeric
+    Local xRet := nil as variant
+
+    nPos := aScan(::aKeyValue, {|x| x[2] == xSearch })
+
+    if nPos > 0
+        xRet := ::aKeyValue[nPos,2]
+    endif
+
+Return xRet
+
+
+Method GetAllValues Class keyValue
+
+    Local aKeyValue := {} as array
+
+    aKeyValue := aClone(::aKeyValue)
+
+Return aKeyValue
