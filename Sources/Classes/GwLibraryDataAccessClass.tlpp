@@ -14,31 +14,36 @@ Class GwDataAccess
     Public Data aQuery      as array default {}
     Public Data lOppened    as logical default .F.
 
+    Public Data lSeekById as logical default .F.
+
     Public Method New() Constructor
-    Public Method SelectArea()
-    Public Method SetOrder()
-    Public Method RetIndexOrder()
-    Public Method GoTop()
-    Public Method GoBottom()
-    Public Method GoToRecno()
-    Public Method SkipLine()
-    Public Method Seek()
-    Public Method SeekAutoFilial()
-    Public Method SaveArea()
-    Public Method SaveOtherAreas()
-    Public Method RestoreArea()
-    Public Method RestoreOtherAreas()
-    Public Method EraseArea()
-    Public Method EraseOtherAreas()
-    Public Method EvalByCondition()
-    Public Method GetValue()
-    Public Method EndOfLines()
-    Public Method NotEndOfLines()
-    Public Method TotalLines()
-    Public Method Oppened()
-    Public Method CloseArea()
-    Public Method ReleaseArea()
-    Public Method GetRecnoId()
+    Public Method SelectArea() as variant
+    Public Method SetOrder( xOrder as variant )
+    Public Method RetIndexOrder() as numeric
+    Public Method GoTop() as variant
+    Public Method GoBottom() as variant
+    Public Method GoToRecno( nRecno as numeric ) as logical
+    Public Method SkipLine() as variant
+    Public Method Seek( cKey as character ) as logical
+    Public Method SeekAutoFilial( cKey as character ) as logical
+    Public Method SaveArea() as variant
+    Public Method SaveOtherAreas( aNames as array )
+    Public Method RestoreArea() as variant
+    Public Method RestoreOtherAreas( cNames as character ) as variant
+    Public Method EraseArea() as variant
+    Public Method EraseOtherAreas() as variant
+    Public Method EvalByCondition( bExec as codeblock, bCondition as codeblock ) as variant
+    Public Method GetValue( cName as character ) as variant
+    Public Method EndOfLines() as logical
+    Public Method NotEndOfLines() as logical
+    Public Method TotalLines() as numeric
+    Public Method Oppened() as logical
+    Public Method CloseArea() as variant
+    Public Method ReleaseArea() as variant
+    Public Method GetRecnoId() as variant
+
+    Public Method SeekCheck() as logical
+    Public Method SeekById( cAprovadorId as character ) as logical
 
 EndClass
 
@@ -53,14 +58,14 @@ Method New(cAlias as character) Class GwDataAccess
 Return Self
 
 
-Method SelectArea() Class GwDataAccess
+Method SelectArea() as variant Class GwDataAccess
 
     DbSelectArea(Self:cAlias)
 
 Return
 
 
-Method SetOrder( xOrder as variant ) Class GwDataAccess
+Method SetOrder( xOrder as variant )  as variant Class GwDataAccess
 
     Local cAlias := "" as character
 
@@ -80,7 +85,7 @@ Method SetOrder( xOrder as variant ) Class GwDataAccess
 Return
 
 
-Method RetIndexOrder() Class GwDataAccess
+Method RetIndexOrder() as numeric Class GwDataAccess
 
     Local cAlias := "" as character
     Local nOrder := 0 as numeric
@@ -92,7 +97,7 @@ Method RetIndexOrder() Class GwDataAccess
 Return nOrder
 
 
-Method GoTop() Class GwDataAccess
+Method GoTop() as variant Class GwDataAccess
 
     Local cAlias := "" as character
 
@@ -103,7 +108,7 @@ Method GoTop() Class GwDataAccess
 Return
 
 
-Method GoBottom() Class GwDataAccess
+Method GoBottom() as variant Class GwDataAccess
 
     Local cAlias := "" as character
 
@@ -114,9 +119,10 @@ Method GoBottom() Class GwDataAccess
 Return
 
 
-Method GoToRecno( nRecno as numeric ) Class GwDataAccess
+Method GoToRecno( nRecno as numeric ) as logical Class GwDataAccess
 
-    Local cAlias := "" as character
+    Local cAlias  := ""  as character
+    Local lResult := .F. as logical
 
     Default nRecno := 0
 
@@ -126,12 +132,16 @@ Method GoToRecno( nRecno as numeric ) Class GwDataAccess
 
         (cAlias)->(DbGoTo(nRecno))
 
+        if (cAlias)->(Recno()) == nRecno
+            lResult := .T.
+        endif
+
     endif
 
-Return
+Return lResult
 
 
-Method SkipLine() Class GwDataAccess
+Method SkipLine() as variant Class GwDataAccess
 
     Local cAlias := "" as character
 
@@ -142,10 +152,10 @@ Method SkipLine() Class GwDataAccess
 Return
 
 
-Method Seek( cKey as character ) Class GwDataAccess
+Method Seek( cKey as character ) as logical Class GwDataAccess
 
-    Local cAlias := ""  as character
-    Local lRet   := .F. as logical
+    Local cAlias  := ""  as character
+    Local lResult := .F. as logical
 
     Default cKey := ""
 
@@ -154,15 +164,15 @@ Method Seek( cKey as character ) Class GwDataAccess
         cAlias := Self:cAlias
 
         if (cAlias)->(MsSeek(cKey))
-            lRet := .T.
+            lResult := .T.
         endif
 
     endif
 
-Return lRet
+Return lResult
 
 
-Method SeekAutoFilial( cKey as character ) Class GwDataAccess
+Method SeekAutoFilial( cKey as character ) as logical Class GwDataAccess
 
     Default cKey := ""
 
@@ -171,7 +181,7 @@ Method SeekAutoFilial( cKey as character ) Class GwDataAccess
 Return
 
 
-Method SaveArea() Class GwDataAccess
+Method SaveArea() as variant Class GwDataAccess
 
     Local cAlias := "" as character
 
@@ -186,7 +196,7 @@ Method SaveArea() Class GwDataAccess
 Return
 
 
-Method SaveOtherAreas( aNames as array ) Class GwDataAccess
+Method SaveOtherAreas( aNames as array ) as variant Class GwDataAccess
 
     Local aAreas := {} as array
     Local cAlias := "" as character
@@ -207,14 +217,14 @@ Method SaveOtherAreas( aNames as array ) Class GwDataAccess
 Return
 
 
-Method RestoreArea() Class GwDataAccess
+Method RestoreArea() as variant Class GwDataAccess
 
     RestArea(Self:aAliasArea)
 
 Return
 
 
-Method RestoreOtherAreas( cNames as character ) Class GwDataAccess
+Method RestoreOtherAreas( cNames as character ) as variant Class GwDataAccess
 
     Local aAreas := {} as array
     Local cName  := "" as character
@@ -258,7 +268,7 @@ Method RestoreOtherAreas( cNames as character ) Class GwDataAccess
 Return
 
 
-Method EraseArea() Class GwDataAccess
+Method EraseArea() as variant Class GwDataAccess
 
     FwFreeArray(Self:aAliasArea)
     Self:aAliasArea := {}
@@ -266,7 +276,7 @@ Method EraseArea() Class GwDataAccess
 Return
 
 
-Method EraseOtherAreas() Class GwDataAccess
+Method EraseOtherAreas() as variant Class GwDataAccess
 
     FwFreeArray(Self:aOtherAreas)
     Self:aOtherAreas := {}
@@ -274,7 +284,7 @@ Method EraseOtherAreas() Class GwDataAccess
 Return
 
 
-Method EvalByCondition( bExec as codeblock, bCondition as codeblock ) Class GwDataAccess
+Method EvalByCondition( bExec as codeblock, bCondition as codeblock ) as variant Class GwDataAccess
 
     Local cAlias := "" as character
 
@@ -292,7 +302,7 @@ Method EvalByCondition( bExec as codeblock, bCondition as codeblock ) Class GwDa
 Return
 
 
-Method GetValue( cName as character ) Class GwDataAccess
+Method GetValue( cName as character ) as variant Class GwDataAccess
 
     Local cAlias := ""  as character
     Local xRet   := nil as variant
@@ -310,17 +320,17 @@ Method GetValue( cName as character ) Class GwDataAccess
 Return xRet
 
 
-Method EndOfLines() Class GwDataAccess
+Method EndOfLines() as logical Class GwDataAccess
 
 Return (Self:cAlias)->(EOF())
 
 
-Method NotEndOfLines() Class GwDataAccess
+Method NotEndOfLines() as logical Class GwDataAccess
 
 Return !(Self:cAlias)->(EOF())
 
 
-Method TotalLines() Class GwDataAccess
+Method TotalLines() as numeric Class GwDataAccess
 
     Local cAlias := "" as character
     Local nTotal := 0  as numeric
@@ -333,12 +343,12 @@ Method TotalLines() Class GwDataAccess
 Return nTotal
 
 
-Method Oppened() Class GwDataAccess
+Method Oppened() as logical Class GwDataAccess
 
 Return ::lOppened
 
 
-Method CloseArea() Class GwDataAccess
+Method CloseArea() as variant Class GwDataAccess
 
     Local cAlias := ""  as character
 
@@ -349,7 +359,7 @@ Method CloseArea() Class GwDataAccess
 Return
 
 
-Method ReleaseArea() Class GwDataAccess
+Method ReleaseArea() as variant Class GwDataAccess
 
     Local cAlias := ""  as character
 
@@ -370,3 +380,47 @@ Method GetRecnoId() Class GwDataAccess
     cAlias := Self:cAlias
 
 Return (cAlias)->(Recno())
+
+
+Method SeekCheck() as logical Class GwDataAccess
+
+    Local lResult := .F. as logical
+
+    Default cName := cFieldIdAprovador__
+
+    if ::lSeekById .And. _Super:NotEndOfLines() .And. ::cAprovadorId == Super:GetValue(cName)
+        lResult := .F.
+    endif
+
+Return lResult
+
+
+Method SeekById( cId as character ) as logical Class GwDataAccess
+
+    ::cId       := ""
+    ::nRecno    := 0
+    ::lSeekById := .F.
+
+    if !::SeekCheck()
+
+        _Super:SelectArea()
+        _Super:SetOrder(cUniqueIndexAprovador__)
+        _Super:GoTop()
+        if _Super:SeekAutoFilial(cId)
+            ::lSeekById := .T.
+        endif
+
+    else
+        ::lSeekById := .T.
+    endif
+
+    if ::lSeekById
+        ::cId    := _Super:GetValue(cFieldIdAprovador__)
+        ::nRecno := _Super:GetRecnoId()
+        ::LoadAllItensId()
+    endif
+
+Return ::lSeekById
+
+
+
