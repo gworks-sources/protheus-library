@@ -59,3 +59,39 @@ User Function GwDataAccessExecute()
     enddo
 
 Return
+
+
+
+User Function fExemplo()
+
+    Local cNome := "" as character
+    Local oData := nil as object
+
+    oData := GwDataAccess():New("SA1")
+    oData:SetOrder('A1_FILIAL+A1_CGC')
+    if oData:SeekAutoFilial('11893584763')
+        cNome := oData:GetValue('A1_NOME') // SA1->A1_NOME
+    endif
+
+Return
+
+
+User Function fExemplo2()
+
+    Local oData := nil as object
+
+    oData := GwDataAccess():New("SC6")
+    oData:SetOrder('C6_FILIAL+C6_NUM+C6_ITEM')
+    if oData:SeekAutoFilial('010310')
+        while oData:NotEndOfLines() // !SC6->(EOF())
+
+
+
+            oData:SkipLine()
+
+        enddo
+    endif
+
+    oData:ReleaseArea()
+
+Return
