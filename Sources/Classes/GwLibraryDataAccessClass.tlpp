@@ -1,10 +1,40 @@
 #include "TOTVS.ch"
 #include "MsObject.ch"
 
+#define PAR_DATASOURCE_REQUIRE .T.
+#define PAR_DATASOURCE_NOT_REQUIRE .F.
+
 using namespace Gworks.Library.Utils
 using namespace Gworks.library.Functions
 
 namespace Gworks.Library.Classes
+
+
+
+User Function fTeste123()
+
+
+    Local oData
+    Local aRelation
+
+    aRelation := { ;
+        'DA0',;
+        'DA0_FILIAL+DA0_CODTAB',;
+        'DA1_FILIAL+DA1_CODTAB',;
+        'DA0_CODTAB',;
+        'DA1_PRODUTO' ;
+    }
+
+    oData := GwDataAccess():New('DA0')
+    oData:SeekById(M->C5_TABELA)
+    oData:SetRelation(aRelation)
+    if oData:RelationSearch('DA1_PRODUTO',GDFieldGet('C6_PRODUTO'))
+        lExist := .T.
+    endif
+
+Return
+
+
 
 Class GwDataAccess
 
@@ -13,10 +43,14 @@ Class GwDataAccess
     Public Data aOtherAreas as array default {}
     Public Data aQuery      as array default {}
     Public Data lOppened    as logical default .F.
-
-    Public Data lSeekById as logical default .F.
+    Public Data cDataSource as character default ""
+    Public Data lSeekById   as logical default .F.
+    Public Data aRelation   as array default {}
+    Public Data oRelation   as object default nil
 
     Public Method New() Constructor
+    Public Method SetDataSource( cDataSource as character ) as variant
+
     Public Method SelectArea() as variant
     Public Method SetOrder( xOrder as variant )
     Public Method RetIndexOrder() as numeric
@@ -34,28 +68,72 @@ Class GwDataAccess
     Public Method EraseOtherAreas() as variant
     Public Method EvalByCondition( bExec as codeblock, bCondition as codeblock ) as variant
     Public Method GetValue( cName as character ) as variant
-    Public Method EndOfLines() as logical
-    Public Method NotEndOfLines() as logical
+    Public Method EndOfFile() as logical
+    Public Method NotEndOfFile() as logical
+    Public Method LastOfLines() as logical // TODO: implementar...
     Public Method TotalLines() as numeric
     Public Method Oppened() as logical
     Public Method CloseArea() as variant
     Public Method ReleaseArea() as variant
     Public Method GetRecnoId() as variant
 
-    Public Method SeekCheck() as logical
-    Public Method SeekById( cAprovadorId as character ) as logical
+    Public Method SeekCheck() as logical // TODO: revisar
+    Public Method SeekById( cAprovadorId as character ) as logical // TODO: revisar
+
+    Public Method SetRelation() as variant
+    Public Method SelectRelation( cAliasJoin as character, cIndexJoin as character ) as logical
+    Public Method RelationJoin( cAliasJoin as character, cIndexJoin as character ) as logical
+    Public Method RelationSearch( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical
+    Public Method RelationGetValue( cFieldName as character ) as object
+
+
+    Private Method ValidDataSource( lRequireDictionary as logical ) as logical
+
 
 EndClass
 
 
-Method New(cAlias as character) Class GwDataAccess
+Method New( cAlias as character ) Class GwDataAccess
+
+    Default cAlias := ""
+
+    if Empty(cAlias)
+        UserException("GwDataAccess:New - Argumento cAlias inválido ou não informado!")
+    endif
 
     Self:cAlias      := cAlias
     Self:lOppened    := Select(cAlias) > 0
     Self:aAliasArea  := if( ::lOppened, (cAlias)->(GetArea()), {} )
     Self:aOtherAreas := {}
+    Self:aRelation   := {}
+
+    Self:SetDataSource()
 
 Return Self
+
+
+Method SetDataSource( cDataSource as character ) as variant Class GwDataAccess
+
+    Default cDataSource := "SX2"
+
+    if !(cDataSource $ "SX2;SQL")
+        UserException("GwDataAccess:SetDataSource - Argumento cDataSource inválido!")
+    endif
+
+    Self:cDataSource := cDataSource
+
+Return
+
+
+Method ValidDataSource( lRequireDictionary as logical ) as logical Class GwDataAccess
+
+    Default lRequireDictionary := .T.
+
+    if lRequireDictionary .And. ::cDataSource != "SX2"
+        UserException("GwDataAccess:ValidDataSource - Acesso a método inválido para o DataSource " +'"'+ ::cDataSource +'"!')
+    endif
+
+Return .T.
 
 
 Method SelectArea() as variant Class GwDataAccess
@@ -69,6 +147,8 @@ Method SetOrder( xOrder as variant )  as variant Class GwDataAccess
 
     Local cAlias := "" as character
 
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
     cAlias := Self:cAlias
 
     do case
@@ -77,7 +157,7 @@ Method SetOrder( xOrder as variant )  as variant Class GwDataAccess
         case Val(xOrder) == "C" ; (cAlias)->(RetOrder(,xOrder))
 
         otherwise
-            UserException("GwDataAccess:SetOrder - Argumentos inválidos!")
+            UserException("GwDataAccess:SetOrder - Argumento xOrder inválido!")
     endcase
 
     (cAlias)->(DbGoTop())
@@ -89,6 +169,8 @@ Method RetIndexOrder() as numeric Class GwDataAccess
 
     Local cAlias := "" as character
     Local nOrder := 0 as numeric
+
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
 
     cAlias := Self:cAlias
 
@@ -126,6 +208,8 @@ Method GoToRecno( nRecno as numeric ) as logical Class GwDataAccess
 
     Default nRecno := 0
 
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
     if nRecno > 0
 
         cAlias := Self:cAlias
@@ -159,6 +243,8 @@ Method Seek( cKey as character ) as logical Class GwDataAccess
 
     Default cKey := ""
 
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
     if !Empty(cKey)
 
         cAlias := Self:cAlias
@@ -176,6 +262,8 @@ Method SeekAutoFilial( cKey as character ) as logical Class GwDataAccess
 
     Default cKey := ""
 
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
     ::Seek(xFilial(::cAlias)+cKey)
 
 Return
@@ -186,6 +274,8 @@ Method SaveArea() as variant Class GwDataAccess
     Local cAlias := "" as character
 
     cAlias := Self:cAlias
+
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
 
     if !Empty(Self:aAliasArea)
         Self:EraseArea()
@@ -218,6 +308,8 @@ Return
 
 
 Method RestoreArea() as variant Class GwDataAccess
+
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
 
     RestArea(Self:aAliasArea)
 
@@ -270,6 +362,8 @@ Return
 
 Method EraseArea() as variant Class GwDataAccess
 
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
     FwFreeArray(Self:aAliasArea)
     Self:aAliasArea := {}
 
@@ -320,12 +414,12 @@ Method GetValue( cName as character ) as variant Class GwDataAccess
 Return xRet
 
 
-Method EndOfLines() as logical Class GwDataAccess
+Method EndOfFile() as logical Class GwDataAccess
 
 Return (Self:cAlias)->(EOF())
 
 
-Method NotEndOfLines() as logical Class GwDataAccess
+Method NotEndOfFile() as logical Class GwDataAccess
 
 Return !(Self:cAlias)->(EOF())
 
@@ -363,6 +457,8 @@ Method ReleaseArea() as variant Class GwDataAccess
 
     Local cAlias := ""  as character
 
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
     cAlias := Self:cAlias
 
     do case
@@ -377,6 +473,8 @@ Method GetRecnoId() Class GwDataAccess
 
     Local cAlias := "" as character
 
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
     cAlias := Self:cAlias
 
 Return (cAlias)->(Recno())
@@ -388,7 +486,9 @@ Method SeekCheck() as logical Class GwDataAccess
 
     Default cName := cFieldIdAprovador__
 
-    if ::lSeekById .And. _Super:NotEndOfLines() .And. ::cAprovadorId == Super:GetValue(cName)
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
+    if ::lSeekById .And. _Super:NotEndOfFile() .And. ::cAprovadorId == Super:GetValue(cName)
         lResult := .F.
     endif
 
@@ -396,6 +496,8 @@ Return lResult
 
 
 Method SeekById( cId as character ) as logical Class GwDataAccess
+
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
 
     ::cId       := ""
     ::nRecno    := 0
@@ -423,4 +525,105 @@ Method SeekById( cId as character ) as logical Class GwDataAccess
 Return ::lSeekById
 
 
+Method SetRelation( aAttr as array,  ) as variant Class GwDataAccess
 
+    Local cAliasFrom     := "" as character
+    Local cAliasJoin     := "" as character
+    Local cIndexFrom     := "" as character
+    Local cIndexJoin     := "" as character
+    Local cFieldIdFrom   := "" as character
+    Local cFieldIdJoin   := "" as character
+    Local cFieldIdJoinFK := "" as character
+
+    Local oRelation := nil as object
+
+    cAliasFrom     := ::cAlias
+    cAliasJoin     := if( ValType(aAttr[1]) == "C", aAttr[1], "" )
+    cIndexFrom     := if( ValType(aAttr[2]) == "C", aAttr[2], "" )
+    cIndexJoin     := if( ValType(aAttr[3]) == "C", aAttr[3], "" )
+    cFieldIdFrom   := if( ValType(aAttr[4]) == "C", aAttr[4], "" )
+    cFieldIdJoin   := if( ValType(aAttr[5]) == "C", aAttr[5], "" )
+    cFieldIdJoinFK := if( ValType(aAttr[6]) == "C", aAttr[6], "" )
+
+    oRelation := GwDataRelationClass():New()
+    oRelation:SetAliasFrom(cAliasFrom)
+    oRelation:SetAliasJoin(cAliasJoin)
+    oRelation:SetIndexFrom(cIndexFrom)
+    oRelation:SetIndexJoin(cIndexJoin)
+    oRelation:SetFieldIdFrom(cFieldIdFrom)
+    oRelation:SetFieldIdJoin(cFieldIdJoin)
+    oRelation:SetFieldIdJoinFK(cFieldIdJoinFK)
+
+    oRelation:RelationJoin()
+
+    ::oRelation := oRelation
+
+    aAdd(::aRelation, oRelation)
+
+Return
+
+
+Method SelectRelation( cAliasJoin as character, cIndexJoin as character ) as logical Class GwDataAccess
+
+    Local nI := 0 as numeric
+    Local oRelation := nil as object
+
+    Default cAliasJoin := ""
+    Default cIndexJoin := ""
+
+    for nI:=1 to Len(::aRelation)
+
+        oRelation := aRelation[nI]
+        if oRelation:cAliasJoin == cAliasJoin .And. ( Empty(cIndexJoin) .Or. !Empty(cIndexJoin) .And. oRelation:cIndexJoin == cIndexJoin )
+            lResult := .T.
+            exit
+        endif
+
+    next
+
+    if lResult
+        ::oRelation := oRelation
+    else
+        FwFreeObj(::oRelation)
+        ::oRelation := nil
+    endif
+
+Return lResult
+
+
+Method RelationJoin( cAliasJoin as character, cIndexJoin as character ) as logical Class GwDataAccess
+
+    Local lResult := .F.
+
+    Default cAliasJoin := ""
+    Default cIndexJoin := ""
+
+    if Empty(cAliasJoin) .Or. ( !Empty(cAliasJoin) .And. ::SelectRelation(cAliasJoin, cIndexJoin) )
+
+        ::oRelation:Join()
+
+        lResult := .T.
+
+    endif
+
+Return lResult
+
+
+Method RelationSearch( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical Class GwDataAccess
+
+    Local lResult := .F. as logical
+
+    if ::oRelation:Search( cFieldName, xContent, @cRetJoinId )
+        lResult := .T.
+    endif
+
+Return lResult
+
+
+Method RelationGetValue( cFieldName as character ) as object Class GwDataAccess
+
+    Local oResult := nil as object
+
+    oResult := ::oRelation:GetValue(cFieldName)
+
+Return oResult

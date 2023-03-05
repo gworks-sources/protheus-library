@@ -1,0 +1,281 @@
+
+#include "MsObject.ch"
+#include 'TOTVS.ch'
+
+namespace Gworks.Library.Classes
+
+Class GwDataRelationClass
+
+    Public Data aJoinRecno     as array default {}
+    Public Data aJoinId        as array default {}
+    Public Data lJoin          as logical default .F.
+
+    Public Data cAliasFrom     as character default "" // Ex.: "SC5"
+    Public Data cAliasJoin     as character default "" // Ex.: "SC6"
+    Public Data cIndexFrom     as character default "" // Ex.: "C5_FILIAL+C5_NUM
+    Public Data cIndexJoin     as character default "" // Ex.: "C6_FILIAL+C6_NUM
+    Public Data cFieldIdFrom   as character default "" // Ex.: "C5_NUM" (opcional)
+    Public Data cFieldIdJoin   as character default "" // Ex.: "C6_ITEM+C6_PRODUTO"
+    Public Data cFieldIdJoinFK as character default "" // Ex.: "C6_NUM" (opcional)
+    Public Data cResultJoinFK  as character default "" // Ex.: "01000000000000111
+
+    Public Method New() Constructor
+
+    // Métodos públicos da classe
+    Public Method SetAliasFrom( cValue as character ) as variant
+    Public Method SetAliasJoin( cValue as character ) as variant
+    Public Method SetIndexFrom( cValue as character ) as variant
+    Public Method SetIndexJoin( cValue as character ) as variant
+    Public Method SetFieldIdFrom( cValue as character ) as variant
+    Public Method SetFieldIdJoin( cValue as character ) as variant
+    Public Method SetFieldIdJoinFK( cValue as character ) as variant
+    Public Method Join() as logical
+    Public Method Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical
+    Public Method GetValue( cFieldName as character ) as object
+
+    // Métodos internos da classe
+    Private Method ValidAttr() as logical
+    Private Method ValidJoin() as logical
+    Private Method Load() as logical
+
+EndClass
+
+
+Method New() Class GwDataRelationClass
+
+    ::cAliasFrom := ""
+    ::cAliasJoin := ""
+    ::cIndexFrom := ""
+    ::cIndexJoin := ""
+    ::cFieldIdFrom := ""
+    ::cFieldIdJoin := ""
+    ::cFieldIdJoinFK := ""
+
+Return Self
+
+
+Method SetAliasFrom( cValue as character ) Class GwDataRelationClass
+    ::cAliasFrom := cValue
+Return
+
+
+Method SetAliasJoin( cValue as character ) Class GwDataRelationClass
+    ::cAliasJoin := cValue
+Return
+
+
+Method SetIndexFrom( cValue as character ) Class GwDataRelationClass
+    ::cIndexFrom := cValue
+Return
+
+
+Method SetIndexJoin( cValue as character ) Class GwDataRelationClass
+    ::cIndexJoin := cValue
+Return
+
+
+Method SetFieldIdFrom( cValue as character ) Class GwDataRelationClass
+    ::cFieldIdFrom := cValue
+Return
+
+
+Method SetFieldIdJoin( cValue as character ) Class GwDataRelationClass
+    ::cFieldIdJoin := cValue
+Return
+
+
+Method SetFieldIdJoinFK( cValue as character ) Class GwDataRelationClass
+    ::cFieldIdJoinFK := cValue
+Return
+
+
+Method ValidJoin() as logical Class GwDataRelationClass
+
+    if !::lJoin
+        UserException("GwDataRelationClass:ValidJoin - Metodo Join() não executado!" )
+    endif
+
+Return .T.
+
+
+Method ValidAttr() as logical Class GwDataRelationClass
+
+    do case
+
+    case Empty( ::cAliasFrom )
+        UserException("GwDataRelationClass:ValidAttr - Atributo cAliasFrom não informado!" )
+
+    case Empty( ::cAliasJoin )
+        UserException("GwDataRelationClass:ValidAttr - Atributo cAliasJoin não informado!" )
+
+    case Empty( ::cIndexFrom )
+        UserException("GwDataRelationClass:ValidAttr - Atributo cIndexFrom não informado!" )
+
+    case Empty( ::cIndexJoin )
+        UserException("GwDataRelationClass:ValidAttr - Atributo cIndexJoin não informado!" )
+
+    case Empty( ::cFieldIdJoin )
+        UserException("GwDataRelationClass:ValidAttr - Atributo cFieldIdJoin não informado!" )
+
+    endcase
+
+Return .T.
+
+
+Method Load() as logical Class GwDataRelationClass
+
+    Local aArea      := {}  as array
+    Local cAliasJoin := ""  as character
+    Local cAliasFrom := ""  as character
+    Local lResult    := .F. as logical
+
+    ::ValidAttr()
+    ::ValidJoin()
+
+    FwFreeArray(::aJoinRecno)
+    ::aJoinRecno := {}
+
+    cAliasFrom := ::cAliasFrom
+    cAliasJoin := ::cAliasJoin
+
+    aArea := GetArea()
+
+    while !(cAliasJoin)->(EOF()) .And. ::cResultJoinFK == (cAliasFrom)->(&::cIndexFrom)
+
+        aAdd( ::aJoinRecno, (cAliasJoin)->(Recno()) )
+        aAdd( ::aJoinId   , (cAliasJoin)->(&::cFieldIdJoin) )
+
+        (cAliasJoin)->(DbSkip())
+
+    enddo
+
+    RestArea(aArea)
+
+    lResult := ( !Empty(::aJoinRecno) .And. !Empty(::aJoinId) )
+
+Return lResult
+
+
+Method Join() as logical Class GwDataRelationClass
+
+    Local cAliasJoin := ""  as character
+    Local lResult    := .F. as logical
+
+    ::ValidAttr()
+
+    if Empty(::cFieldIdJoinFK)
+        ::cFieldIdJoinFK := ::cIndexJoin
+    endif
+
+    cAliasJoin := ::cAliasJoin
+
+    DbSelectArea(::cAliasJoin)
+    (cAliasJoin)->(DbSetOrder(RetOrder(,::cIndexJoin)))
+    (cAliasJoin)->(DbGoTop())
+    if (cAliasJoin)->(MsSeek(::cIndexJoin)) //if (cAliasJoin)->(MsSeek(xFilial(cAliasJoin)+cResultJoinFK))
+        ::cResultJoinFK := (cAliasJoin)->(&cFieldIdJoinFK)
+        lResult := .T.
+    endif
+
+    ::lJoin := lResult
+
+Return lJoin
+
+
+Method Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical Class GwDataRelationClass
+
+    Local aArea      := {}  as array
+    Local aAreaJoin  := {}  as array
+    Local nI         := 0   as numeric
+    Local cAliasJoin := ""  as character
+    Local lResult    := .F. as logical
+
+    Default cFieldName := ""
+    Default xContent   := nil
+    Default cRetJoinId := "" // retorna via ref. memória os itens em que foram encontrato o respectivo valor procurado
+
+    if Empty(cFieldName)
+        UserException("GwDataRelationClass:Search - Parâmetro cFieldName não informado!")
+    endif
+
+    if ValType(xContent) == "U"
+        UserException("GwDataRelationClass:Search - Parâmetro xContent não pode ser nulo!")
+    endif
+
+    ::ValidAttr()
+    ::ValidJoin()
+
+    cAliasJoin := ::cAliasJoin
+
+    aArea := GetArea()
+    aAreaJoin := (cAliasJoin)->(GetArea())
+
+    if Empty(::aJoinRecno)
+        ::Load()
+    endif
+
+    for nI:=1 to Len(::aJoinRecno)
+
+        (cAliasJoin)->(DbGoTo(::aJoinRecno[nI]))
+
+        if AllTrim(Upper((cAliasJoin)->(&cFieldName))) == AllTrim(Upper(xContent))
+
+            if !Empty(cRetJoinId)
+                cRetJoinId += ";"
+            endif
+
+            cRetJoinId += (cAliasJoin)->(&::cFieldIdJoin)
+
+            lResult := .T.
+
+        endif
+
+    next
+
+    RestArea(aAreaJoin)
+    RestArea(aArea)
+
+Return lResult
+
+
+Method GetValue( cFieldName as character ) as object Class GwDataRelationClass
+
+    Local aArea      := {}  as array
+    Local aAreaJoin  := {}  as array
+    Local nI         := 0   as numeric
+    Local cAliasJoin := ""  as character
+    Local cKey       := ""  as character
+    Local xValue     := nil as variant
+    Local oResult    := nil as object
+
+    Default cRetJoinId := ""
+
+    ::ValidAttr()
+    ::ValidJoin()
+
+    cAliasJoin := ::cAliasJoin
+
+    aArea := GetArea()
+    aAreaJoin := (cAliasJoin)->(GetArea())
+
+    if Empty(::aJoinRecno)
+        ::Load()
+    endif
+
+    oResult := GwKeyValue():New()
+
+    for nI:=1 to Len(::aJoinRecno)
+
+        (cAliasJoin)->(DbGoTo(::aJoinRecno[nI]))
+
+        cKey   := (cAliasJoin)->(&::cFieldIdJoin)
+        xValue := (cAliasJoin)->(&cFieldName)
+
+        oResult:Add(cKey, xValue)
+
+    next
+
+    RestArea(aAreaJoin)
+    RestArea(aArea)
+
+Return oResult
