@@ -4,7 +4,7 @@
 
 namespace Gworks.Library.Classes
 
-Class GwDataRelation
+Class GwDataRelationClass
 
     Public Data aJoinRecno     as array default {}
     Public Data aJoinId        as array default {}
@@ -41,7 +41,7 @@ Class GwDataRelation
 EndClass
 
 
-Method New() Class GwDataRelation
+Method New() Class GwDataRelationClass
 
     ::cAliasFrom := ""
     ::cAliasJoin := ""
@@ -54,42 +54,42 @@ Method New() Class GwDataRelation
 Return Self
 
 
-Method SetAliasFrom( cValue as character ) Class GwDataRelation
+Method SetAliasFrom( cValue as character ) Class GwDataRelationClass
     ::cAliasFrom := cValue
 Return
 
 
-Method SetAliasJoin( cValue as character ) Class GwDataRelation
+Method SetAliasJoin( cValue as character ) Class GwDataRelationClass
     ::cAliasJoin := cValue
 Return
 
 
-Method SetIndexFrom( cValue as character ) Class GwDataRelation
+Method SetIndexFrom( cValue as character ) Class GwDataRelationClass
     ::cIndexFrom := cValue
 Return
 
 
-Method SetIndexJoin( cValue as character ) Class GwDataRelation
+Method SetIndexJoin( cValue as character ) Class GwDataRelationClass
     ::cIndexJoin := cValue
 Return
 
 
-Method SetFieldIdFrom( cValue as character ) Class GwDataRelation
+Method SetFieldIdFrom( cValue as character ) Class GwDataRelationClass
     ::cFieldIdFrom := cValue
 Return
 
 
-Method SetFieldIdJoin( cValue as character ) Class GwDataRelation
+Method SetFieldIdJoin( cValue as character ) Class GwDataRelationClass
     ::cFieldIdJoin := cValue
 Return
 
 
-Method SetFieldIdJoinFK( cValue as character ) Class GwDataRelation
+Method SetFieldIdJoinFK( cValue as character ) Class GwDataRelationClass
     ::cFieldIdJoinFK := cValue
 Return
 
 
-Method ValidJoin() as logical Class GwDataRelation
+Method ValidJoin() as logical Class GwDataRelationClass
 
     if !::lJoin
         UserException("GwDataRelationClass:ValidJoin - Metodo Join() não executado!" )
@@ -98,7 +98,7 @@ Method ValidJoin() as logical Class GwDataRelation
 Return .T.
 
 
-Method ValidAttr() as logical Class GwDataRelation
+Method ValidAttr() as logical Class GwDataRelationClass
 
     do case
 
@@ -122,7 +122,7 @@ Method ValidAttr() as logical Class GwDataRelation
 Return .T.
 
 
-Method Load() as logical Class GwDataRelation
+Method Load() as logical Class GwDataRelationClass
 
     Local aArea      := {}  as array
     Local cAliasJoin := ""  as character
@@ -156,7 +156,7 @@ Method Load() as logical Class GwDataRelation
 Return lResult
 
 
-Method Join() as logical Class GwDataRelation
+Method Join() as logical Class GwDataRelationClass
 
     Local cAliasJoin := ""  as character
     Local lResult    := .F. as logical
@@ -182,7 +182,7 @@ Method Join() as logical Class GwDataRelation
 Return lJoin
 
 
-Method Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical Class GwDataRelation
+Method Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical Class GwDataRelationClass
 
     Local aArea      := {}  as array
     Local aAreaJoin  := {}  as array
@@ -238,7 +238,7 @@ Method Search( cFieldName as character, xContent as variant, cRetJoinId as chara
 Return lResult
 
 
-Method GetValue( cFieldName as character ) as object Class GwDataRelation
+Method GetValue( cFieldName as character ) as object Class GwDataRelationClass
 
     Local aArea      := {}  as array
     Local aAreaJoin  := {}  as array
