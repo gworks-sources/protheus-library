@@ -14,10 +14,9 @@ Class GwDataRelation
     Public Data cAliasJoin     as character default "" // Ex.: "SC6"
     Public Data cIndexFrom     as character default "" // Ex.: "C5_FILIAL+C5_NUM
     Public Data cIndexJoin     as character default "" // Ex.: "C6_FILIAL+C6_NUM
-    Public Data cFieldIdFrom   as character default "" // Ex.: "C5_NUM" (opcional)
+
     Public Data cFieldIdJoin   as character default "" // Ex.: "C6_ITEM+C6_PRODUTO"
-    Public Data cFieldIdJoinFK as character default "" // Ex.: "C6_NUM" (opcional)
-    Public Data cResultJoinFK  as character default "" // Ex.: "01000000000000111
+    Public Data cFieldIdResult  as character default "" // Ex.: "01000000000000111
 
     Public Method New() Constructor
 
@@ -47,9 +46,7 @@ Method New() Class GwDataRelation
     ::cAliasJoin := ""
     ::cIndexFrom := ""
     ::cIndexJoin := ""
-    ::cFieldIdFrom := ""
     ::cFieldIdJoin := ""
-    ::cFieldIdJoinFK := ""
 
 Return Self
 
@@ -74,18 +71,8 @@ Method SetIndexJoin( cValue as character ) Class GwDataRelation
 Return
 
 
-Method SetFieldIdFrom( cValue as character ) Class GwDataRelation
-    ::cFieldIdFrom := cValue
-Return
-
-
 Method SetFieldIdJoin( cValue as character ) Class GwDataRelation
     ::cFieldIdJoin := cValue
-Return
-
-
-Method SetFieldIdJoinFK( cValue as character ) Class GwDataRelation
-    ::cFieldIdJoinFK := cValue
 Return
 
 
@@ -140,7 +127,7 @@ Method Load() as logical Class GwDataRelation
 
     aArea := GetArea()
 
-    while !(cAliasJoin)->(EOF()) .And. ::cResultJoinFK == (cAliasFrom)->(&::cIndexFrom)
+    while !(cAliasJoin)->(EOF()) .And. ::cFieldIdResult == (cAliasFrom)->(&::cIndexFrom)
 
         aAdd( ::aJoinRecno, (cAliasJoin)->(Recno()) )
         aAdd( ::aJoinId   , (cAliasJoin)->(&::cFieldIdJoin) )
@@ -163,17 +150,13 @@ Method Join() as logical Class GwDataRelation
 
     ::ValidAttr()
 
-    if Empty(::cFieldIdJoinFK)
-        ::cFieldIdJoinFK := ::cIndexJoin
-    endif
-
     cAliasJoin := ::cAliasJoin
 
     DbSelectArea(::cAliasJoin)
     (cAliasJoin)->(DbSetOrder(RetOrder(,::cIndexJoin)))
     (cAliasJoin)->(DbGoTop())
-    if (cAliasJoin)->(MsSeek(::cIndexJoin)) //if (cAliasJoin)->(MsSeek(xFilial(cAliasJoin)+cResultJoinFK))
-        ::cResultJoinFK := (cAliasJoin)->(&cFieldIdJoinFK)
+    if (cAliasJoin)->(MsSeek(&::cIndexJoin)) // if (cAliasJoin)->(MsSeek(xFilial(cAliasJoin)+cFieldIdResult))
+        ::cFieldIdResult := (cAliasJoin)->(&cIndexJoin)
         lResult := .T.
     endif
 
