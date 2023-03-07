@@ -9,48 +9,31 @@ using namespace Gworks.library.Functions
 
 namespace Gworks.Library.Classes
 
-
-
-User Function fTeste123()
-
-
-    Local oData
-    Local aRelation
-
-    aRelation := { ;
-        'DA0',;
-        'DA0_FILIAL+DA0_CODTAB',;
-        'DA1_FILIAL+DA1_CODTAB',;
-        'DA0_CODTAB',;
-        'DA1_PRODUTO' ;
-    }
-
-    oData := GwDataAccess():New('DA0')
-    oData:SeekById(M->C5_TABELA)
-    oData:SetRelation(aRelation)
-    if oData:RelationSearch('DA1_PRODUTO',GDFieldGet('C6_PRODUTO'))
-        lExist := .T.
-    endif
-
-Return
-
-
-
 Class GwDataAccess
 
+    // Dados principais
     Public Data cAlias      as character default ""
-    Public Data aAliasArea  as array default {}
-    Public Data aOtherAreas as array default {}
+    Public Data cDataSource as character default ""
     Public Data aQuery      as array default {}
     Public Data lOppened    as logical default .F.
-    Public Data cDataSource as character default ""
-    Public Data lSeekById   as logical default .F.
+    Public Data nRecnoId    as numeric default 0
+
+    // Atributos de controle de área
+    Public Data aAliasArea  as array default {}
+    Public Data aOtherAreas as array default {}
+
+    // Atributos de controle de relacionamento com demais entidades
     Public Data aRelation   as array default {}
     Public Data oRelation   as object default nil
 
+    // Atributos de manipulação de índices
+    Public Data nIndexOrd   as numeric default 0
+    Public Data cIndexKey   as character default ""
+    Public Data lAutoFilial as logical default .T.
+    Public Data lFound      as logical default .F.
+
     Public Method New() Constructor
     Public Method SetDataSource( cDataSource as character ) as variant
-
     Public Method SelectArea() as variant
     Public Method SetOrder( xOrder as variant )
     Public Method RetIndexOrder() as numeric
@@ -58,8 +41,10 @@ Class GwDataAccess
     Public Method GoBottom() as variant
     Public Method GoToRecno( nRecno as numeric ) as logical
     Public Method SkipLine() as variant
+    Public Method EnableAutoFilial() as variant
+    Public Method DisableAutoFilial() as variant
+    Public Method SeekStatus() as logical
     Public Method Seek( cKey as character ) as logical
-    Public Method SeekAutoFilial( cKey as character ) as logical
     Public Method SaveArea() as variant
     Public Method SaveOtherAreas( aNames as array )
     Public Method RestoreArea() as variant
@@ -70,15 +55,11 @@ Class GwDataAccess
     Public Method GetValue( cName as character ) as variant
     Public Method EndOfFile() as logical
     Public Method NotEndOfFile() as logical
-    Public Method LastOfLines() as logical // TODO: implementar...
     Public Method TotalLines() as numeric
     Public Method Oppened() as logical
     Public Method CloseArea() as variant
     Public Method ReleaseArea() as variant
     Public Method GetRecnoId() as variant
-
-    Public Method SeekCheck() as logical // TODO: revisar
-    Public Method SeekById( cAprovadorId as character ) as logical // TODO: revisar
 
     Public Method SetRelation() as variant
     Public Method SelectRelation( cAliasJoin as character, cIndexJoin as character ) as logical
@@ -101,13 +82,21 @@ Method New( cAlias as character ) Class GwDataAccess
         UserException("GwDataAccess:New - Argumento cAlias inválido ou não informado!")
     endif
 
+    Self:SelectArea()
+    Self:SetDataSource()
+
     Self:cAlias      := cAlias
     Self:lOppened    := Select(cAlias) > 0
-    Self:aAliasArea  := if( ::lOppened, (cAlias)->(GetArea()), {} )
+    Self:aAliasArea  := (cAlias)->(GetArea())
     Self:aOtherAreas := {}
     Self:aRelation   := {}
+    Self:lAutoFilial := .T.
 
-    Self:SetDataSource()
+    if ::lOppened
+        ::nIndexOrd := (cAlias)->(IndexOrd())
+        ::cIndexKey := (cAlias)->(IndexKey(::nIndexOrd))
+        ::nRecnoId  := (cAlias)->(Recno())
+    endif
 
 Return Self
 
@@ -151,14 +140,22 @@ Method SetOrder( xOrder as variant )  as variant Class GwDataAccess
 
     cAlias := Self:cAlias
 
+    ::nIndexOrd := 0
+    ::cIndexKey := ""
+
     do case
+
         case Val(xOrder) == 'N' ; (cAlias)->(DbSetOrder(xOrder))
 
-        case Val(xOrder) == "C" ; (cAlias)->(RetOrder(,xOrder))
+        case Val(xOrder) == "C" ; (cAlias)->(DbSetOrder(RetOrder(,xOrder)))
 
         otherwise
             UserException("GwDataAccess:SetOrder - Argumento xOrder inválido!")
+
     endcase
+
+    ::nIndexOrd := (cAlias)->(IndexOrd())
+    ::cIndexKey := (cAlias)->(IndexKey(::nIndexOrd))
 
     (cAlias)->(DbGoTop())
 
@@ -236,6 +233,46 @@ Method SkipLine() as variant Class GwDataAccess
 Return
 
 
+Method EnableAutoFilial() as variant Class GwDataAccess
+    ::lAutoFilial := .T.
+Return
+
+
+Method DisableAutoFilial() as variant Class GwDataAccess
+    ::lAutoFilial := .F.
+Return
+
+
+Method SeekStatus( cKey as character ) as logical Class GwDataAccess
+
+    Local cAlias  := ""  as character
+    Local lResult := .F. as logical
+
+    Default cKey  := ""
+
+    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
+    cAlias := ::cAlias
+
+    if !Empty(cAlias) .And. Select(cAlias) > 0 .And. (cAlias)->(IndexOrd) == ::nIndexOrd .And. !(cAlias)->(EOF())
+
+        if !Empty(::cIndexKey) .And. !Empty(cKey)
+
+            cKey += iif( ::lAutoFilial, xFilial(cAlias), "" )
+
+            lResult := ( (cAlias)->(&::cIndexKey) == cKey )
+
+        else
+
+            lResult := .T.
+
+        endif
+
+    endif
+
+Return lResult
+
+
 Method Seek( cKey as character ) as logical Class GwDataAccess
 
     Local cAlias  := ""  as character
@@ -245,28 +282,40 @@ Method Seek( cKey as character ) as logical Class GwDataAccess
 
     ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
 
-    if !Empty(cKey)
+    if Empty(cKey)
+        UserException("GwDataAccess:Seek - Parâmetro cKey não informado!")
+    endif
 
-        cAlias := Self:cAlias
+    if Empty(::cIndexKey)
+        UserException("GwDataAccess:Seek - Alias sem index definido!")
+    endif
+
+    cAlias := ::cAlias
+
+    if ::SeekStatus(cKey)
+
+        lResult := .T.
+
+    else
+
+        cKey += iif( ::lAutoFilial, xFilial(cAlias), "" )
 
         if (cAlias)->(MsSeek(cKey))
+
             lResult := .T.
+
         endif
 
     endif
 
+    ::nRecnoId := 0
+    ::lFound   := .F.
+    if lResult
+        ::nRecnoId := (cAlias)->(Recno())
+        ::lFound   := .T.
+    endif
+
 Return lResult
-
-
-Method SeekAutoFilial( cKey as character ) as logical Class GwDataAccess
-
-    Default cKey := ""
-
-    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
-
-    ::Seek(xFilial(::cAlias)+cKey)
-
-Return
 
 
 Method SaveArea() as variant Class GwDataAccess
@@ -312,6 +361,10 @@ Method RestoreArea() as variant Class GwDataAccess
     ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
 
     RestArea(Self:aAliasArea)
+
+    ::nIndexOrd := (cAlias)->(IndexOrd())
+    ::cIndexKey := (cAlias)->(IndexKey(::nIndexOrd))
+    ::nRecnoId  := (cAlias)->(Recno())
 
 Return
 
@@ -478,51 +531,6 @@ Method GetRecnoId() Class GwDataAccess
     cAlias := Self:cAlias
 
 Return (cAlias)->(Recno())
-
-
-Method SeekCheck() as logical Class GwDataAccess
-
-    Local lResult := .F. as logical
-
-    Default cName := cFieldIdAprovador__
-
-    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
-
-    if ::lSeekById .And. _Super:NotEndOfFile() .And. ::cAprovadorId == Super:GetValue(cName)
-        lResult := .F.
-    endif
-
-Return lResult
-
-
-Method SeekById( cId as character ) as logical Class GwDataAccess
-
-    ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
-
-    ::cId       := ""
-    ::nRecno    := 0
-    ::lSeekById := .F.
-
-    if !::SeekCheck()
-
-        _Super:SelectArea()
-        _Super:SetOrder(cUniqueIndexAprovador__)
-        _Super:GoTop()
-        if _Super:SeekAutoFilial(cId)
-            ::lSeekById := .T.
-        endif
-
-    else
-        ::lSeekById := .T.
-    endif
-
-    if ::lSeekById
-        ::cId    := _Super:GetValue(cFieldIdAprovador__)
-        ::nRecno := _Super:GetRecnoId()
-        ::LoadAllItensId()
-    endif
-
-Return ::lSeekById
 
 
 Method SetRelation( aAttr as array,  ) as variant Class GwDataAccess
