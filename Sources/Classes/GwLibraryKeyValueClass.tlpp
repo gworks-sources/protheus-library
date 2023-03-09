@@ -21,21 +21,21 @@ Class GwKeyValue
 EndClass
 
 
-Method New() Class KeyValue
+Method New() Class GwKeyValue
 
     Self:aKeyValue := {}
 
 Return Self
 
 
-Method Add( cKey as character, xValue as variant ) Class KeyValue
+Method Add( cKey as character, xValue as variant ) Class GwKeyValue
 
     aAdd(::aKeyValue, { cKey, xValue })
 
 Return
 
 
-Method GetValueByKey( xSearch as variant ) Class KeyValue
+Method GetValueByKey( xSearch as variant ) Class GwKeyValue
 
     Local nPos := 0 as numeric
     Local xRet := nil as variant
@@ -49,7 +49,7 @@ Method GetValueByKey( xSearch as variant ) Class KeyValue
 Return xRet
 
 
-Method GetAllValues Class keyValue
+Method GetAllValues() Class GwKeyValue
 
     Local aKeyValue := {} as array
 
