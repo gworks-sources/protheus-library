@@ -6,19 +6,23 @@ namespace Gworks.Library.Classes
 
 Class GwDataRelation
 
-    Public Data aJoinRecno     as array default {}
-    Public Data aJoinId        as array default {}
-    Public Data lJoin          as logical default .F.
+    // Atributos de controle da classe
+    Public Data aJoinRecno   as array     default {}
+    Public Data lJoin        as logical   default .F.
 
-    Public Data cAliasFrom     as character default "" // Ex.: "SC5"
-    Public Data cAliasJoin     as character default "" // Ex.: "SC6"
-    Public Data cIndexFrom     as character default "" // Ex.: "C5_FILIAL+C5_NUM
-    Public Data cIndexJoin     as character default "" // Ex.: "C6_FILIAL+C6_NUM
+    // Atributos públicos da classe
+    Public Data cAliasFrom   as character default "" // Ex.: "SC5" - tabela de origem (from)
+    Public Data cAliasJoin   as character default "" // Ex.: "SC6" - tabela de destino (join)
+    Public Data cIndexFrom   as character default "" // Ex.: "C5_FILIAL+C5_NUM - índice da tabela de origem para relacionamento com a tabela de destino
+    Public Data cIndexJoinFK as character default "" // Ex.: "C6_FILIAL+C6_NUM - índice da tabela de destino para relacionamentocom tabela de origem (foreign key)
+    Public Data cIndexJoinPK as character default "" // Ex.: "C6_FILIAL+C6_ITEM+C6_PRODUTO" - índice de identificação da tabela de destino (primary key)
+    Public Data cKeyJoinFK   as character default "" // Ex.: "0101003125" - valor conforme cIndexJoinFK
+    Public Data aKeyJoinPK   as array     default {} // Ex.: "010101000000000000111" - valor conforme cIndexJoinPK
 
-    Public Data cFieldIdJoin   as character default "" // Ex.: "C6_ITEM+C6_PRODUTO"
-    Public Data cFieldIdResult  as character default "" // Ex.: "01000000000000111
+    // Atributos internos da classe
+    Private oSearchResult    as object    default nil
 
-    Public Method New() Constructor
+    Public Method New( oAttr as object ) Constructor
 
     // Métodos públicos da classe
     Public Method SetAliasFrom( cValue as character ) as variant
@@ -29,8 +33,10 @@ Class GwDataRelation
     Public Method SetFieldIdJoin( cValue as character ) as variant
     Public Method SetFieldIdJoinFK( cValue as character ) as variant
     Public Method Join() as logical
-    Public Method Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical
-    Public Method GetValue( cFieldName as character ) as object
+    Public Method Search( cFieldName as character, xContent as variant ) as logical
+    Public Method GetSearchResult() as object
+    Public Method GetValue( cFieldName as character ) as variant
+    Public Method GetValues( cFieldName as character ) as object
 
     // Métodos internos da classe
     Private Method ValidAttr() as logical
@@ -39,62 +45,68 @@ Class GwDataRelation
 
 EndClass
 
+/*/{Protheus.doc} GwDataRelation::New
+Método construtor da classe.
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@param oAttr, object, objeto do tipo GwKeyValue() contendo os argumentos obrigatórios (*) para o funcionamento da classe.
+@return object, Instância do object criada.
+@obs
+    (*) São obrigatórios os seguintes argumentos:
+        - cAliasFrom
+        - cAliasJoin
+        - cIndexFrom
+        - cIndexJoinFK
+        - cIndexJoinPK
+@example
+    oAttr := GwKeyValue():New()
+    oAttr:Add('AliasFrom','SC5')
+    oAttr:Add('AliasJoin','SC6')
+    oAttr:Add('IndexFrom','C5_FILIAL+C5_NUM')
+    oAttr:Add('IndexJoinFK','C6_FILIAL+C6_NUM')
+    oAttr:Add('IndexJoinPK','C6_FILIAL+C6_ITEM+C6_PRODUTO')
+    oRelation := GwDataRelation():New(oAttr)
+/*/
+Method New( oAttr as object ) Class GwDataRelation
 
-Method New() Class GwDataRelation
+    Default oAttr := nil as object
 
-    ::cAliasFrom := ""
-    ::cAliasJoin := ""
-    ::cIndexFrom := ""
-    ::cIndexJoin := ""
-    ::cFieldIdJoin := ""
+    if !Empty(oAttr)
+
+        ::cAliasFrom := oAttr:GetValueByKey('AliasFrom')
+        ::cAliasJoin := oAttr:GetValueByKey('AliasJoin')
+        ::cIndexFrom := oAttr:GetValueByKey('IndexFrom')
+        ::cIndexJoinFK := oAttr:GetValueByKey('IndexJoinFK')
+        ::cIndexJoinPK := oAttr:GetValueByKey('IndexJoinPK')
+
+    endif
+
+    if  Empty(::cAliasFrom) .Or.;
+        Empty(::cAliasJoin) .Or.;
+        Empty(::cIndexFrom) .Or.;
+        Empty(::cIndexJoinFK) .Or.;
+        Empty(::cIndexJoinPK)
+
+        UserException("GwDataRelation:New - Argumentos inválidos ou não informados!")
+
+    endif
+
+    ::cKeyJoinFK := ""
+    ::aKeyJoinPK := {}
+    ::oSearchResult := GwKeyValue():New()
 
 Return Self
 
-
-Method SetAliasFrom( cValue as character ) Class GwDataRelation
-    ::cAliasFrom := cValue
-Return
-
-
-Method SetAliasJoin( cValue as character ) Class GwDataRelation
-    ::cAliasJoin := cValue
-Return
-
-
-Method SetIndexFrom( cValue as character ) Class GwDataRelation
-    ::cIndexFrom := cValue
-Return
-
-
-Method SetIndexJoin( cValue as character ) Class GwDataRelation
-    ::cIndexJoin := cValue
-Return
-
-
-Method SetFieldIdFrom( cValue as character ) Class GwDataRelation
-    ::cFieldIdFrom := cValue
-Return
-
-
-Method SetFieldIdJoin( cValue as character ) Class GwDataRelation
-    ::cFieldIdJoin := cValue
-Return
-
-
-Method SetFieldIdJoinFK( cValue as character ) Class GwDataRelation
-    ::cFieldIdJoinFK := cValue
-Return
-
-
-Method ValidJoin() as logical Class GwDataRelation
-
-    if !::lJoin
-        UserException("GwDataRelation:ValidJoin - Metodo Join() não executado!" )
-    endif
-
-Return .T.
-
-
+/*/{Protheus.doc} GwDataRelation::ValidAttr() as logical
+Método interno para validar se os atributos obrigatórios foram informados para o funcionamento da classe.
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@return logical, .T. sucesso e .F. falha.
+/*/
 Method ValidAttr() as logical Class GwDataRelation
 
     do case
@@ -108,17 +120,46 @@ Method ValidAttr() as logical Class GwDataRelation
     case Empty( ::cIndexFrom )
         UserException("GwDataRelation:ValidAttr - Atributo cIndexFrom não informado!" )
 
-    case Empty( ::cIndexJoin )
-        UserException("GwDataRelation:ValidAttr - Atributo cIndexJoin não informado!" )
+    case Empty( ::cIndexJoinFK )
+        UserException("GwDataRelation:ValidAttr - Atributo cIndexJoinFK não informado!" )
 
-    case Empty( ::cFieldIdJoin )
-        UserException("GwDataRelation:ValidAttr - Atributo cFieldIdJoin não informado!" )
+    case Empty( ::cIndexJoinPK )
+        UserException("GwDataRelation:ValidAttr - Atributo cIndexJoinPK não informado!" )
 
     endcase
 
 Return .T.
 
+/*/{Protheus.doc} GwDataRelation::ValidJoin() as logical
+Método interno para validar, na chamada de métodos que dependem do método Join(), se o mesmo foi executando previamente.
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@return logical, .T. sucesso e .F. falha.
+/*/
+Method ValidJoin() as logical Class GwDataRelation
 
+    if !::lJoin
+        UserException("GwDataRelation:ValidJoin - Metodo Join() não executado!" )
+    endif
+
+Return .T.
+
+/*/{Protheus.doc} GwDataRelation::Load() as logical
+Método interno para carregar os dados referente à tabela relacionada conforme a regra de relacionamento
+definida entre cKeyJoinFK e cIndexFrom.
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@return logical, .T. sucesso e .F. falha.
+@obs
+    Popula os atributos:
+     - aJoinRecno: array contendo a lista de identificadores recno() de cada elemento join correspondente
+     - aKeyJoinPK: array de strings conforme índice de identificação definido por cIndexJoinPK de cada elemento join correspondente
+    (*) Este método possui outros métodos que dependem dele.
+/*/
 Method Load() as logical Class GwDataRelation
 
     Local aArea      := {}  as array
@@ -137,10 +178,10 @@ Method Load() as logical Class GwDataRelation
 
     aArea := GetArea()
 
-    while !(cAliasJoin)->(EOF()) .And. ::cFieldIdResult == (cAliasFrom)->(&::cIndexFrom)
+    while !(cAliasJoin)->(EOF()) .And. ::cKeyJoinFK == (cAliasFrom)->(&::cIndexFrom)
 
         aAdd( ::aJoinRecno, (cAliasJoin)->(Recno()) )
-        aAdd( ::aJoinId   , (cAliasJoin)->(&::cFieldIdJoin) )
+        aAdd( ::aKeyJoinPK, (cAliasJoin)->(&::cIndexJoinPK) )
 
         (cAliasJoin)->(DbSkip())
 
@@ -148,11 +189,22 @@ Method Load() as logical Class GwDataRelation
 
     RestArea(aArea)
 
-    lResult := ( !Empty(::aJoinRecno) .And. !Empty(::aJoinId) )
+    lResult := ( !Empty(::aJoinRecno) .And. !Empty(::aKeyJoinPK) )
 
 Return lResult
 
-
+/*/{Protheus.doc} GwDataRelation::Join() as logical
+Posiciona a tabela relacionada conforme a chave do índice definida por cIndexJoinFK.
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@return logical, .T. sucesso e .F. falha.
+@example oRelation:Join()
+@obs
+    Popula o atributo cKeyJoinFK que servirá de valor referêncial para relacionamento com a
+    tabela from em outros métodos, como o método Load() por exemplo.
+/*/
 Method Join() as logical Class GwDataRelation
 
     Local cAliasJoin := ""  as character
@@ -163,29 +215,46 @@ Method Join() as logical Class GwDataRelation
     cAliasJoin := ::cAliasJoin
 
     DbSelectArea(::cAliasJoin)
-    (cAliasJoin)->(DbSetOrder(RetOrder(,::cIndexJoin)))
+    (cAliasJoin)->(DbSetOrder(RetOrder(,::cIndexJoinFK)))
     (cAliasJoin)->(DbGoTop())
-    if (cAliasJoin)->(MsSeek(&::cIndexJoin)) // if (cAliasJoin)->(MsSeek(xFilial(cAliasJoin)+cFieldIdResult))
-        ::cFieldIdResult := (cAliasJoin)->(&cIndexJoin)
+    if (cAliasJoin)->(MsSeek(&::cIndexJoinFK))
+        ::cKeyJoinFK := (cAliasJoin)->(&cIndexJoinFK)
         lResult := .T.
+    endif
+
+    if lResult
+        ::Load()
     endif
 
     ::lJoin := lResult
 
 Return lJoin
 
+/*/{Protheus.doc} GwDataRelation::Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical
+Localiza, com base no conteúdo de um terminado campo ou expressão, em todos os elementos relacionados à tabela join.
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@param cFieldName, character, Nome do campo desejado a localizar o conteúdo, Ex.: "C6_TES".
+@param xContent, variant, valor correspondente à cFieldName que se deseja localizar, ex.: "501'
+@return logical, .T. sucesso e .F. falha.
+@obs Utilize o método GetSearchResult() para retornar um objeto de tipo GwKeyValue() contendo todos os elementos correspondentes ao campo e conteúdo procurados.
+@example lResult := oRelation:Search("C6_TES","501")
+/*/
+Method Search( cFieldName as character, xContent as variant ) as logical Class GwDataRelation
 
-Method Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical Class GwDataRelation
-
-    Local aArea      := {}  as array
-    Local aAreaJoin  := {}  as array
-    Local nI         := 0   as numeric
-    Local cAliasJoin := ""  as character
-    Local lResult    := .F. as logical
+    Local aArea        := {}  as array
+    Local aAreaJoin    := {}  as array
+    Local nI           := 0   as numeric
+    Local cAliasJoin   := ""  as character
+    Local cKey         := ""  as character
+    Local xValue       := nil as variant
+    Local lResult      := .F. as logical
+    Local oResult      := nil as object
 
     Default cFieldName := ""
     Default xContent   := nil
-    Default cRetJoinId := "" // retorna via ref. memória os itens em que foram encontrato o respectivo valor procurado
 
     if Empty(cFieldName)
         UserException("GwDataRelation:Search - Parâmetro cFieldName não informado!")
@@ -207,41 +276,100 @@ Method Search( cFieldName as character, xContent as variant, cRetJoinId as chara
         ::Load()
     endif
 
+    oResult := GwKeyValue():New()
+
     for nI:=1 to Len(::aJoinRecno)
 
         (cAliasJoin)->(DbGoTo(::aJoinRecno[nI]))
 
         if AllTrim(Upper((cAliasJoin)->(&cFieldName))) == AllTrim(Upper(xContent))
 
-            if !Empty(cRetJoinId)
-                cRetJoinId += ";"
+            cKey   := "IndexJoinPK"
+            cValue := (cAliasJoin)->(&::cIndexJoinPK)
+            oResult:Add(cKey, cValue)
+
+            if !lResult
+                lResult := .T.
             endif
-
-            cRetJoinId += (cAliasJoin)->(&::cFieldIdJoin)
-
-            lResult := .T.
 
         endif
 
     next
+
+    ::oSearchResult := oResult
 
     RestArea(aAreaJoin)
     RestArea(aArea)
 
 Return lResult
 
+/*/{Protheus.doc} GwDataRelation::GetSearchResult() as object
+Retorna o resultado conforme execução do método ::Search()
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@return object, resultado.
+/*/
+Method GetSearchResult() as object Class GwDataRelation
 
-Method GetValue( cFieldName as character ) as object Class GwDataRelation
+Return ::oSearchResult
+
+/*/{Protheus.doc} GwDataRelation::GetValue( cFieldName as character ) as variant
+Apenas retorna o conteúdo de um campo conforme tabela relacionada sem alterar seu posicionamento.
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@return variant, conteúdo do campo.
+/*/
+Method GetValue( cFieldName as character ) as variant Class GwDataRelation
+
+    (cAliasJoin)->(&cFieldName)
+
+Return
+
+/*/{Protheus.doc} GwDataRelation::GetValues( cFieldName as character ) as object
+Retorna o resultado de um determinado campo ou expressão em um objeto de tipo GwKeyValue().
+@type method
+@version 12.1.33
+@author Gworks
+@since 09/03/2023
+@return object, resultado.
+@example
+    Considerando o cenário em que um pedido de venda com 2 (dois) itens, onde:
+        Item 1 - C6_FILIAL = "0101" | C6_ITEM = "01" | C6_PRODUTO = "000000000000111" | C6_PRCVEN = 1.99 | C6_QUANT = 5
+        Item 2 - C6_FILIAL = "0101" | C6_ITEM = "02" | C6_PRODUTO = "000000000000112" | C6_PRCVEN = 2.98 | C6_QUANT = 5
+    E deseja-se obter o preço de venda do segundo item, podemos implementar da seguinte maneira:
+    Código
+        - oResult := oRelation:GetValues("C6_PRCVEN")
+        - oValue := oResult:GetValueByKey("010102000000000000112")
+        - nValue := oValue:GetValueByKey("C6_PRCVEN") // 2.98
+
+    Obs.: Para melhor entendimento, oResult pode ser compreendido e ilustrado como um objeto Json:
+    Objeto Json representando oResult
+        "key":"010101000000000000111" // item 1
+        "values": [ { "Key" : "C6_PRCVEN", "Value" : 1.99 },
+                    { "key" : "C6_QUANT" , "value" : 5    } ]
+        "key":"010102000000000000112" // item 2
+        "values": [ { "Key" : "C6_PRCVEN", "value" : 2.98 },
+                    { "key" : "C6_QUANT" , "value" : 5    } ]
+/*/
+Method GetValues( aFieldNames as character ) as object Class GwDataRelation
 
     Local aArea      := {}  as array
     Local aAreaJoin  := {}  as array
     Local nI         := 0   as numeric
+    Local nJ         := 0   as numeric
     Local cAliasJoin := ""  as character
+    Local cFieldName := ""  as character
     Local cKey       := ""  as character
     Local xValue     := nil as variant
     Local oResult    := nil as object
+    Local oValues    := nil as object
+    Local aValues    := {}  as array
 
-    Default cRetJoinId := ""
+    Default aFieldNames := {}
 
     ::ValidAttr()
     ::ValidJoin()
@@ -259,11 +387,22 @@ Method GetValue( cFieldName as character ) as object Class GwDataRelation
 
     for nI:=1 to Len(::aJoinRecno)
 
+        oValues := GwKeyValue():New()
+
         (cAliasJoin)->(DbGoTo(::aJoinRecno[nI]))
 
-        cKey   := (cAliasJoin)->(&::cFieldIdJoin)
-        xValue := (cAliasJoin)->(&cFieldName)
+        for nJ:=1 to Len(aFieldNames)
 
+            cFieldName := aFieldNames[nJ]
+
+            cKey := cFieldName
+            xValue := (cAliasJoin)->(&cFieldName)
+            oValues:Add(cKey, xValue)
+
+        next
+
+        cKey := (cAliasJoin)->(&::cIndexJoinPK)
+        xValue := oValues
         oResult:Add(cKey, xValue)
 
     next
