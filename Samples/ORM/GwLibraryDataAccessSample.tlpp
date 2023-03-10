@@ -1,97 +1,50 @@
-#include "totvs.ch"
+#include "TOTVS.ch"
+
+using namespace Gworks.Library.Classes
 
 namespace Gworks.Sample.Classes
 
-Class DataAccessSample From GwDataAccess
+User Function GwDataAccessSample() // Gworks.Sample.Classes.U_GwDataAccessSample
 
-    Public Data aQuery as array default {}
-    Public Data cAlias as character default ""
+    Local cJobEmp := "01"
+    Local cJobFil := "01"
+    Local aTables := {"SA1","SC5","SC6"}
 
-    Public Method New() Constructor
+    Local oAttr
+    Local oData
 
-EndClass
+    oAttr := GwKeyValue():New()
+    oAttr:Add('AliasFrom', 'SC5')
+    oAttr:Add('AliasJoin', 'SC6')
+    oAttr:Add('IndexFrom', 'C5_FILIAL+C5_NUM')
+    oAttr:Add('IndexJoinFK', 'C6_FILIAL+C6_NUM')
+    oAttr:Add('IndexJoinPK', 'C6_FILIAL+C6_ITEM')
 
-Method New() Class DataAccessSample
+    RPCSetEnv(;
+        /* cRpcEmp  */ cJobEmp,;
+        /* cRpcFil  */ cJobFil,;
+        /* cEnvUser */ ,;
+        /* cEnvPass */ ,;
+        /* cEnvMod  */ ,;
+        /* cFunName */ ,;
+        /* aTables  */ aTables)
 
-    Local cAlias := "" as character
+        oData := GwDataAccess():New("SC5")
+        oData:SelectArea()
+        oData:SetOrder('C5_FILIAL+C5_NUM')
+        oData:GoTop()
+        if oData:Seek('495044')
 
-    cAlias := GetNextQuery()
+            ConOut("Localizou o pedido...")
 
-    BeginSQL Alias cAlias
+            if oData:SetRelation(oAttr)
 
-        SELECT TOP 200
-            SB1.B1_FILIAL
-            ,SB1.B1_COD
-            ,SB1.B1_DESC
-            ,SB1.B1_UM
-            ,SB1.B1_TIPO
-        FROM %table:SB1% SB1
-        WHERE SB1.%notDel%
+                ConOut("Definiu um relacionamento...")
 
-    EndSQL
+            endif
 
-    _Super:New(cAlias)
+        endif
 
-    Self:cAlias := cAlias
-    Self:aQuery := GetLastQuery
-
-Return Self
-
-User Function GwDataAccessExecute()
-
-    Local oDicProdutos := nil as object
-    Local oQryProdutos := nil as object
-
-    oDicProdutos := GwDataAccess():New("SB1")
-    oDicProduto:SaveAliasArea()
-    oDicProduto:SaveAreas({"SA1","SC5","SC6"})
-        // processamento...
-    oDicProduto:RestAliasArea()
-    oDicProduto:RestoreSavedAreas()
-
-    oQryProdutos := DataAccessSample():New()
-    oQryProdutos:GoTop()
-    while oQryProdutos:EndOfLine() ;
-        .And. oQryProdutos:GetValue("B1_FILIAL") == xFilial("SB1") ;
-        .And. oQryProdutos:GetValue("B1_TIPO") > ' '
-            // processamento
-        oQryProdutos:SkipLine()
-    enddo
-
-Return
-
-
-
-User Function fExemplo()
-
-    Local cNome := "" as character
-    Local oData := nil as object
-
-    oData := GwDataAccess():New("SA1")
-    oData:SetOrder('A1_FILIAL+A1_CGC')
-    if oData:SeekAutoFilial('11893584763')
-        cNome := oData:GetValue('A1_NOME') // SA1->A1_NOME
-    endif
-
-Return
-
-
-User Function fExemplo2()
-
-    Local oData := nil as object
-
-    oData := GwDataAccess():New("SC6")
-    oData:SetOrder('C6_FILIAL+C6_NUM+C6_ITEM')
-    if oData:SeekAutoFilial('010310')
-        while oData:NotEndOfLines() // !SC6->(EOF())
-
-
-
-            oData:SkipLine()
-
-        enddo
-    endif
-
-    oData:ReleaseArea()
+    RpcClearEnv()
 
 Return
