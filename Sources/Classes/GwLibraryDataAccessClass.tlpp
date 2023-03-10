@@ -571,6 +571,10 @@ Method SetRelation( oAttr as object ) as variant Class GwDataAccess
 
     endif
 
+    if Empty(::cAliasFrom)
+        ::cAliasFrom := ::cAlias
+    endif
+
     if  Empty(::cAliasFrom) .Or.;
         Empty(::cAliasJoin) .Or.;
         Empty(::cIndexFrom) .Or.;
