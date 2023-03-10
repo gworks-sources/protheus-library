@@ -15,6 +15,7 @@ Class GwKeyValue
 
     Public Method New() Constructor
     Public Method Add()
+    Public Method Len()
     Public Method GetAllValues()
     Public Method GetValueByKey()
 
@@ -33,6 +34,15 @@ Method Add( cKey as character, xValue as variant ) Class GwKeyValue
     aAdd(::aKeyValue, { cKey, xValue })
 
 Return
+
+
+Method Len()
+
+    Local nResult := 0
+
+    nResult := Len(aKeyValue)
+
+Return nResult
 
 
 Method GetValueByKey( xSearch as variant ) Class GwKeyValue
