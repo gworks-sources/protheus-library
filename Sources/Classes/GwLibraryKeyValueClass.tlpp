@@ -15,7 +15,7 @@ Class GwKeyValue
 
     Public Method New() Constructor
     Public Method Add()
-    Public Method Len()
+    Public Method Length()
     Public Method GetAllValues()
     Public Method GetValueByKey()
 
@@ -36,7 +36,7 @@ Method Add( cKey as character, xValue as variant ) Class GwKeyValue
 Return
 
 
-Method Len()
+Method Length() Class GwKeyValue
 
     Local nResult := 0
 
