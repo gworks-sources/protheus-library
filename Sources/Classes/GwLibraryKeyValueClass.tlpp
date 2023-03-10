@@ -50,7 +50,7 @@ Method GetValueByKey( xSearch as variant ) Class GwKeyValue
     Local nPos := 0 as numeric
     Local xRet := nil as variant
 
-    nPos := aScan(::aKeyValue, {|x| x[2] == xSearch })
+    nPos := aScan(::aKeyValue, {|x| x[1] == xSearch })
 
     if nPos > 0
         xRet := ::aKeyValue[nPos,2]
