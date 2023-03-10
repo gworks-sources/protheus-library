@@ -131,7 +131,7 @@ Método interno para validar, na chamada de métodos que dependem do método Join()
 Method ValidJoin() as logical Class GwDataRelation
 
     if !::lJoin
-        UserException("GwDataRelation:ValidJoin - Metodo Join() não executado!" )
+        UserException("GwDataRelation:ValidJoin - Metodo Join() não executado ou executado com falhas!" )
     endif
 
 Return .T.
@@ -168,10 +168,10 @@ Method Load() as logical Class GwDataRelation
 
     aArea := GetArea()
 
-    while !(cAliasJoin)->(EOF()) .And. ::cKeyJoinFK == (cAliasFrom)->(::cIndexFrom)
+    while !(cAliasJoin)->(EOF()) .And. (cAliasJoin)->&(Self:cIndexJoinFK) == (cAliasFrom)->&(::cIndexFrom)
 
         aAdd( ::aJoinRecno, (cAliasJoin)->(Recno()) )
-        aAdd( ::aKeyJoinPK, (cAliasJoin)->(::cIndexJoinPK) )
+        aAdd( ::aKeyJoinPK, (cAliasJoin)->&(::cIndexJoinPK) )
 
         (cAliasJoin)->(DbSkip())
 
@@ -209,16 +209,16 @@ Method Join() as logical Class GwDataRelation
     (::cAliasJoin)->(DbGoTop())
     if (::cAliasJoin)->(MsSeek(cKey))
         ::cKeyJoinFK := (::cAliasJoin)->&(::cIndexJoinFK)
-        lResult := .T.
+        ::lJoin := .T.
+        lResult := ::Load()
     endif
 
-    if lResult
-        ::Load()
+    if !lResult
+        ::lJoin := .F.
+        lResult := .F.
     endif
 
-    ::lJoin := lResult
-
-Return lJoin
+Return lResult
 
 /*/{Protheus.doc} GwDataRelation::Search( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical
 Localiza, com base no conteúdo de um terminado campo ou expressão, em todos os elementos relacionados à tabela join.
@@ -239,6 +239,7 @@ Method Search( cFieldName as character, xContent as variant ) as logical Class G
     Local nI           := 0   as numeric
     Local cAliasJoin   := ""  as character
     Local cKey         := ""  as character
+    Local lMatch       := .F. as logical
     Local lResult      := .F. as logical
     Local oResult      := nil as object
 
@@ -271,10 +272,25 @@ Method Search( cFieldName as character, xContent as variant ) as logical Class G
 
         (cAliasJoin)->(DbGoTo(::aJoinRecno[nI]))
 
-        if AllTrim(Upper((cAliasJoin)->(cFieldName))) == AllTrim(Upper(xContent))
+        lMatch := .F.
+
+        do case
+
+            case ValType(xContent) == "N"
+                lMatch := (cAliasJoin)->&(cFieldName) == xContent
+
+            case ValType(xContent) == "D"
+                lMatch := (cAliasJoin)->&(cFieldName) == xContent
+
+            case ValType(xContent) == "C"
+                lMatch := AllTrim(Upper((cAliasJoin)->&(cFieldName))) == AllTrim(Upper(xContent))
+
+        endcase
+
+        if lMatch
 
             cKey   := "IndexJoinPK"
-            cValue := (cAliasJoin)->(::cIndexJoinPK)
+            cValue := (cAliasJoin)->&(::cIndexJoinPK)
             oResult:Add(cKey, cValue)
 
             if !lResult
@@ -344,7 +360,7 @@ Retorna o resultado de um determinado campo ou expressão em um objeto de tipo Gw
         "values": [ { "Key" : "C6_PRCVEN", "value" : 2.98 },
                     { "key" : "C6_QUANT" , "value" : 5    } ]
 /*/
-Method GetValues( aFieldNames as character ) as object Class GwDataRelation
+Method GetValues( aFieldNames as array ) as object Class GwDataRelation
 
     Local aArea      := {}  as array
     Local aAreaJoin  := {}  as array
@@ -384,12 +400,12 @@ Method GetValues( aFieldNames as character ) as object Class GwDataRelation
             cFieldName := aFieldNames[nJ]
 
             cKey := cFieldName
-            xValue := (cAliasJoin)->(cFieldName)
+            xValue := (cAliasJoin)->&(cFieldName)
             oValues:Add(cKey, xValue)
 
         next
 
-        cKey := (cAliasJoin)->(::cIndexJoinPK)
+        cKey := (cAliasJoin)->&(::cIndexJoinPK)
         xValue := oValues
         oResult:Add(cKey, xValue)
 

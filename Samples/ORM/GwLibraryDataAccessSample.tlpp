@@ -12,6 +12,8 @@ User Function GwDataAccessSample() // Gworks.Sample.Classes.U_GwDataAccessSample
 
     Local oAttr
     Local oData
+    Local oResult
+    Local cTes := "" as character
 
     oAttr := GwKeyValue():New()
     oAttr:Add('AliasFrom', 'SC5')
@@ -33,13 +35,24 @@ User Function GwDataAccessSample() // Gworks.Sample.Classes.U_GwDataAccessSample
         oData:SelectArea()
         oData:SetOrder('C5_FILIAL+C5_NUM')
         oData:GoTop()
-        if oData:Seek('495044')
+        if oData:Seek('491176')
 
             ConOut("Localizou o pedido...")
 
             if oData:SetRelation(oAttr)
 
                 ConOut("Definiu um relacionamento...")
+
+                if oData:RelationSearch('C6_QTDVEN',15)
+                    ConOut("Localizou um item...")
+                    oResult := oData:RelationGetSearchResult()
+                endif
+
+                ConOut('Retornando os campos C6_PRODUTO e C6_TES..')
+                oResult := oData:RelationGetValues({'C6_PRODUTO','C6_TES'})
+
+                ConOut('Retornando C6_TES do item 7 do pedido...')
+                cTes := oResult:GetValueByKey('0107'):GetValueByKey('C6_TES')
 
             endif
 

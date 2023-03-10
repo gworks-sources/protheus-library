@@ -657,7 +657,7 @@ Method RelationSearch( cFieldName as character, xContent as variant ) as logical
 
     Local lResult := .F. as logical
 
-    if ::oRelation:Search( cFieldName, xContent, @cRetJoinId )
+    if ::oRelation:Search( cFieldName, xContent )
         lResult := .T.
     endif
 
@@ -713,10 +713,10 @@ Retorna o resultado de um determinado campo ou expressão em um objeto de tipo Gw
         "values": [ { "Key" : "C6_PRCVEN", "value" : 2.98 },
                     { "key" : "C6_QUANT" , "value" : 5    } ]
 /*/
-Method RelationGetValues( cFieldName as character ) as object Class GwDataAccess
+Method RelationGetValues( aFieldName as array ) as object Class GwDataAccess
 
     Local oResult := nil as object
 
-    oResult := ::oRelation:GetValues(cFieldName)
+    oResult := ::oRelation:GetValues(aFieldName)
 
 Return oResult
