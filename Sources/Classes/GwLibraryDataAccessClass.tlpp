@@ -307,6 +307,7 @@ Method Seek( cKey as character ) as logical Class GwDataAccess
 
         cKey += iif( ::lAutoFilial, xFilial(cAlias), "" )
 
+        (cAlias)->(DbGoTop())
         if (cAlias)->(MsSeek(cKey))
 
             lResult := .T.
