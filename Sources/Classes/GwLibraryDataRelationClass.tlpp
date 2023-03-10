@@ -83,16 +83,6 @@ Method New( oAttr as object ) Class GwDataRelation
 
     endif
 
-    if  Empty(::cAliasFrom) .Or.;
-        Empty(::cAliasJoin) .Or.;
-        Empty(::cIndexFrom) .Or.;
-        Empty(::cIndexJoinFK) .Or.;
-        Empty(::cIndexJoinPK)
-
-        UserException("GwDataRelation:New - Argumentos inválidos ou não informados!")
-
-    endif
-
     ::cKeyJoinFK := ""
     ::aKeyJoinPK := {}
     ::oSearchResult := GwKeyValue():New()
@@ -178,10 +168,10 @@ Method Load() as logical Class GwDataRelation
 
     aArea := GetArea()
 
-    while !(cAliasJoin)->(EOF()) .And. ::cKeyJoinFK == (cAliasFrom)->(&::cIndexFrom)
+    while !(cAliasJoin)->(EOF()) .And. ::cKeyJoinFK == (cAliasFrom)->(::cIndexFrom)
 
         aAdd( ::aJoinRecno, (cAliasJoin)->(Recno()) )
-        aAdd( ::aKeyJoinPK, (cAliasJoin)->(&::cIndexJoinPK) )
+        aAdd( ::aKeyJoinPK, (cAliasJoin)->(::cIndexJoinPK) )
 
         (cAliasJoin)->(DbSkip())
 
@@ -207,18 +197,18 @@ Posiciona a tabela relacionada conforme a chave do índice definida por cIndexJoi
 /*/
 Method Join() as logical Class GwDataRelation
 
-    Local cAliasJoin := ""  as character
+    Local cKey       := ""  as character
     Local lResult    := .F. as logical
 
     ::ValidAttr()
 
-    cAliasJoin := ::cAliasJoin
+    cKey := (::cAliasFrom)->&(::cIndexFrom)
 
     DbSelectArea(::cAliasJoin)
-    (cAliasJoin)->(DbSetOrder(RetOrder(,::cIndexJoinFK)))
-    (cAliasJoin)->(DbGoTop())
-    if (cAliasJoin)->(MsSeek(&::cIndexJoinFK))
-        ::cKeyJoinFK := (cAliasJoin)->(&cIndexJoinFK)
+    (::cAliasJoin)->(DbSetOrder(RetOrder(,::cIndexJoinFK)))
+    (::cAliasJoin)->(DbGoTop())
+    if (::cAliasJoin)->(MsSeek(cKey))
+        ::cKeyJoinFK := (::cAliasJoin)->&(::cIndexJoinFK)
         lResult := .T.
     endif
 
@@ -281,10 +271,10 @@ Method Search( cFieldName as character, xContent as variant ) as logical Class G
 
         (cAliasJoin)->(DbGoTo(::aJoinRecno[nI]))
 
-        if AllTrim(Upper((cAliasJoin)->(&cFieldName))) == AllTrim(Upper(xContent))
+        if AllTrim(Upper((cAliasJoin)->(cFieldName))) == AllTrim(Upper(xContent))
 
             cKey   := "IndexJoinPK"
-            cValue := (cAliasJoin)->(&::cIndexJoinPK)
+            cValue := (cAliasJoin)->(::cIndexJoinPK)
             oResult:Add(cKey, cValue)
 
             if !lResult
@@ -324,7 +314,7 @@ Apenas retorna o conteúdo de um campo conforme tabela relacionada sem alterar se
 /*/
 Method GetValue( cFieldName as character ) as variant Class GwDataRelation
 
-    (cAliasJoin)->(&cFieldName)
+    (cAliasJoin)->(cFieldName)
 
 Return
 
@@ -366,7 +356,6 @@ Method GetValues( aFieldNames as character ) as object Class GwDataRelation
     Local xValue     := nil as variant
     Local oResult    := nil as object
     Local oValues    := nil as object
-    Local aValues    := {}  as array
 
     Default aFieldNames := {}
 
@@ -395,12 +384,12 @@ Method GetValues( aFieldNames as character ) as object Class GwDataRelation
             cFieldName := aFieldNames[nJ]
 
             cKey := cFieldName
-            xValue := (cAliasJoin)->(&cFieldName)
+            xValue := (cAliasJoin)->(cFieldName)
             oValues:Add(cKey, xValue)
 
         next
 
-        cKey := (cAliasJoin)->(&::cIndexJoinPK)
+        cKey := (cAliasJoin)->(::cIndexJoinPK)
         xValue := oValues
         oResult:Add(cKey, xValue)
 

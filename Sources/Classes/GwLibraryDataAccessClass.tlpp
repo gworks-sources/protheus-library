@@ -89,10 +89,11 @@ Method New( cAlias as character ) Class GwDataAccess
         UserException("GwDataAccess:New - Argumento cAlias inválido ou não informado!")
     endif
 
+    Self:cAlias := cAlias
+
     Self:SelectArea()
     Self:SetDataSource()
 
-    Self:cAlias      := cAlias
     Self:lOppened    := Select(cAlias) > 0
     Self:aAliasArea  := (cAlias)->(GetArea())
     Self:aOtherAreas := {}
@@ -152,9 +153,9 @@ Method SetOrder( xOrder as variant )  as variant Class GwDataAccess
 
     do case
 
-        case Val(xOrder) == 'N' ; (cAlias)->(DbSetOrder(xOrder))
+        case ValType(xOrder) == 'N' ; (cAlias)->(DbSetOrder(xOrder))
 
-        case Val(xOrder) == "C" ; (cAlias)->(DbSetOrder(RetOrder(,xOrder)))
+        case ValType(xOrder) == 'C' ; (cAlias)->(DbSetOrder(RetOrder(,xOrder)))
 
         otherwise
             UserException("GwDataAccess:SetOrder - Argumento xOrder inválido!")
@@ -261,13 +262,13 @@ Method SeekStatus( cKey as character ) as logical Class GwDataAccess
 
     cAlias := ::cAlias
 
-    if !Empty(cAlias) .And. Select(cAlias) > 0 .And. (cAlias)->(IndexOrd) == ::nIndexOrd .And. !(cAlias)->(EOF())
+    if !Empty(cAlias) .And. Select(cAlias) > 0 .And. (cAlias)->(IndexOrd()) == ::nIndexOrd .And. !(cAlias)->(EOF())
 
         if !Empty(::cIndexKey) .And. !Empty(cKey)
 
-            cKey += iif( ::lAutoFilial, xFilial(cAlias), "" )
+            cKey := iif( ::lAutoFilial, xFilial(cAlias), "" ) + cKey
 
-            lResult := ( (cAlias)->(&::cIndexKey) == cKey )
+            lResult := ( (cAlias)->(::cIndexKey) == cKey )
 
         else
 
@@ -305,7 +306,7 @@ Method Seek( cKey as character ) as logical Class GwDataAccess
 
     else
 
-        cKey += iif( ::lAutoFilial, xFilial(cAlias), "" )
+        cKey := iif( ::lAutoFilial, xFilial(cAlias), "" ) + cKey
 
         (cAlias)->(DbGoTop())
         if (cAlias)->(MsSeek(cKey))
@@ -468,7 +469,7 @@ Method GetValue( cName as character ) as variant Class GwDataAccess
 
         cAlias := Self:cAlias
 
-        xRet := (cAlias)->&cName
+        xRet := (cAlias)->(cName)
 
     endif
 
@@ -575,32 +576,31 @@ Method SetRelation( oAttr as object ) as variant Class GwDataAccess
         ::cAliasFrom := ::cAlias
     endif
 
-    if  Empty(::cAliasFrom) .Or.;
-        Empty(::cAliasJoin) .Or.;
-        Empty(::cIndexFrom) .Or.;
-        Empty(::cIndexJoinFK) .Or.;
-        Empty(::cIndexJoinPK)
+    oRelation := GwDataRelation():New()
 
-        UserException("GwDataAccess:SetRelation - Argumentos inválidos ou não informados!")
+    if  !Empty(::cAliasFrom) .And.;
+        !Empty(::cAliasJoin) .And.;
+        !Empty(::cIndexFrom) .And.;
+        !Empty(::cIndexJoinFK) .And.;
+        !Empty(::cIndexJoinPK)
+
+        oRelation:cAliasFrom := ::cAliasFrom
+        oRelation:cAliasJoin := ::cAliasJoin
+        oRelation:cIndexFrom := ::cIndexFrom
+        oRelation:cIndexJoinFK := ::cIndexJoinFK
+        oRelation:cIndexJoinPK := ::cIndexJoinPK
+
+        if oRelation:Join()
+            lResult := .T.
+        else
+            lResult := .F.
+        endif
 
     endif
 
-    oRelation := GwDataRelationClass():New()
-    oRelation:cAliasFrom := ::cAliasFrom
-    oRelation:cAliasJoin := ::cAliasJoin
-    oRelation:cIndexFrom := ::cIndexFrom
-    oRelation:cIndexJoinFK := ::cIndexJoinFK
-    oRelation:cIndexJoinPK := ::cIndexJoinPK
+    ::oRelation := oRelation
 
-    if oRelation:Join()
-        ::oRelation := oRelation
-        lResult := .T.
-    else
-        ::oRelation := nil
-        lResult := .F.
-    endif
-
-    aAdd(::aRelation, oRelation)
+    aAdd(::aRelation, ::oRelation)
 
 Return lResult
 
