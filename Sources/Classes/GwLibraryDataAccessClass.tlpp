@@ -469,7 +469,7 @@ Method GetValue( cName as character ) as variant Class GwDataAccess
 
         cAlias := Self:cAlias
 
-        xRet := (cAlias)->(cName)
+        xRet := (cAlias)->&(cName)
 
     endif
 
