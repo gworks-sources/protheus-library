@@ -367,7 +367,11 @@ Return
 
 Method RestoreArea() as variant Class GwDataAccess
 
+    Local cAlias := "" as character
+
     ::ValidDataSource(PAR_DATASOURCE_REQUIRE)
+
+    cAlias := ::cAlias
 
     RestArea(Self:aAliasArea)
 
@@ -524,7 +528,7 @@ Method ReleaseArea() as variant Class GwDataAccess
     cAlias := Self:cAlias
 
     do case
-        case  ::lOppened ; ::RestArea()
+        case  ::lOppened ; ::RestoreArea()
         case !::lOppened ; ::CloseArea()
     endcase
 
