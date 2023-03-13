@@ -330,7 +330,7 @@ Apenas retorna o conteúdo de um campo conforme tabela relacionada sem alterar se
 /*/
 Method GetValue( cFieldName as character ) as variant Class GwDataRelation
 
-    (cAliasJoin)->(cFieldName)
+    (cAliasJoin)->&(cFieldName)
 
 Return
 
