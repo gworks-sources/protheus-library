@@ -17,6 +17,7 @@ Class GwKeyValue
     Public Method Add( cKey as character, xValue as variant )
     Public Method Length() as numeric
     Public Method GetAllValues() as array
+    Public Method HasName( cName as character ) as logical
     Public Method GetNameByPosition( nPos as numeric ) as character
     Public Method GetValueByPosition( nPos as numeric ) as variant
     Public Method GetValueByKey( xSearch as variant ) as variant
@@ -56,6 +57,22 @@ Method GetAllValues() as array Class GwKeyValue
 Return aKeyValue
 
 
+Method HasName( cName as character ) as logical Class GwKeyValue
+
+    Local nPos := 0   as numeric
+    Local lRet := .F. as logical
+
+    Default cName := ""
+
+    nPos := aScan(::aKeyValue, {|x| x[1] == xSearch })
+
+    if nPos > 0
+        lRet := .T.
+    endif
+
+Return lRet
+
+
 Method GetNameByPosition( nPos as numeric ) as character Class GwKeyValue // TODO: testar...
 
     Local cRet := "" as character
@@ -84,8 +101,14 @@ Return xRet
 
 Method GetValueByKey( xSearch as variant ) as variant Class GwKeyValue
 
-    Local nPos := 0 as numeric
+    Local nPos := 0   as numeric
     Local xRet := nil as variant
+
+    Default xSearch := nil
+
+    if Empty(xSearch)
+        UserException("GwKeyValue:GetValueByKey - Parâmetro xSearch inválido ou não informado!")
+    endif
 
     nPos := aScan(::aKeyValue, {|x| x[1] == xSearch })
 
