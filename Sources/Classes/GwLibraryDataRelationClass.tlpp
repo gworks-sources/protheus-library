@@ -13,8 +13,9 @@ Class GwDataRelation
     // Atributos públicos da classe
     Public Data cAliasFrom     as character default "" // Ex.: "SC5" - tabela de origem (from)
     Public Data cAliasJoin     as character default "" // Ex.: "SC6" - tabela de destino (join)
-    Public Data cIndexFrom     as character default "" // Ex.: "C5_FILIAL+C5_NUM - índice da tabela de origem para relacionamento com a tabela de destino
-    Public Data cIndexJoinFK   as character default "" // Ex.: "C6_FILIAL+C6_NUM - índice da tabela de destino para relacionamentocom tabela de origem (foreign key)
+    Public Data cIndexFrom     as character default "" // Ex.: "C5_FILIAL+C5_NUM" - índice da tabela de origem para relacionamento com a tabela de destino
+    Public Data cKeyFrom       as character default "" // Ex.: "C5_FILIAL+C5_NUM" - chave da tabela de origem para relacionamento com a tabela de destino quando cIndexFrom não corresponder à cIndexJoinFK
+    Public Data cIndexJoinFK   as character default "" // Ex.: "C6_FILIAL+C6_NUM" - índice da tabela de destino para relacionamentocom tabela de origem (foreign key)
     Public Data cIndexJoinPK   as character default "" // Ex.: "C6_FILIAL+C6_ITEM+C6_PRODUTO" - índice de identificação da tabela de destino (primary key)
     Public Data cKeyJoinFK     as character default "" // Ex.: "0101003125" - valor conforme cIndexJoinFK
     Public Data aKeyJoinPK     as array     default {} // Ex.: "010101000000000000111" - valor conforme cIndexJoinPK
@@ -69,12 +70,17 @@ Method New( oAttr as object ) Class GwDataRelation
 
     if !Empty(oAttr)
 
-        ::cAliasFrom := oAttr:GetValueByKey('AliasFrom')
-        ::cAliasJoin := oAttr:GetValueByKey('AliasJoin')
-        ::cIndexFrom := oAttr:GetValueByKey('IndexFrom')
-        ::cIndexJoinFK := oAttr:GetValueByKey('IndexJoinFK')
-        ::cIndexJoinPK := oAttr:GetValueByKey('IndexJoinPK')
+        ::cAliasFrom   := if( oAttr:HasName('AliasFrom'  ), oAttr:GetValueByKey('AliasFrom'  ), "" )
+        ::cAliasJoin   := if( oAttr:HasName('AliasJoin'  ), oAttr:GetValueByKey('AliasJoin'  ), "" )
+        ::cIndexFrom   := if( oAttr:HasName('IndexFrom'  ), oAttr:GetValueByKey('IndexFrom'  ), "" )
+        ::cKeyFrom     := if( oAttr:HasName('KeyFrom'    ), oAttr:GetValueByKey('KeyFrom'    ), "" )
+        ::cIndexJoinFK := if( oAttr:HasName('IndexJoinFK'), oAttr:GetValueByKey('IndexJoinFK'), "" )
+        ::cIndexJoinPK := if( oAttr:HasName('IndexJoinPK'), oAttr:GetValueByKey('IndexJoinPK'), "" )
 
+    endif
+
+    if Empty(::cKeyFrom)
+        ::cKeyFrom := ::cIndexFrom // se cKeyFrom não for informado, assume o mesmo conteúdo de cIndexFrom
     endif
 
     ::cKeyJoinFK := ""
@@ -162,7 +168,7 @@ Method Load() as logical Class GwDataRelation
 
     aArea := GetArea()
 
-    while !(cAliasJoin)->(EOF()) .And. (cAliasJoin)->&(Self:cIndexJoinFK) == (cAliasFrom)->&(::cIndexFrom)
+    while !(cAliasJoin)->(EOF()) .And. (cAliasJoin)->&(Self:cIndexJoinFK) == (cAliasFrom)->&(::cKeyFrom)
 
         aAdd( ::aJoinRecno, (cAliasJoin)->(Recno()) )
         aAdd( ::aKeyJoinPK, (cAliasJoin)->&(::cIndexJoinPK) )
@@ -196,7 +202,7 @@ Method Join() as logical Class GwDataRelation
 
     ::ValidAttr()
 
-    cKey := (::cAliasFrom)->&(::cIndexFrom)
+    cKey := (::cAliasFrom)->&(::cKeyFrom)
 
     DbSelectArea(::cAliasJoin)
     (::cAliasJoin)->(DbSetOrder(RetOrder(,::cIndexJoinFK)))

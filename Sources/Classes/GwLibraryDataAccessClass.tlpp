@@ -26,6 +26,7 @@ Class GwDataAccess
     Public Data cAliasFrom   as character default ""
     Public Data cAliasJoin   as character default ""
     Public Data cIndexFrom   as character default ""
+    Public Data cKeyFrom     as character default ""
     Public Data cIndexJoinFK as character default ""
     Public Data cIndexJoinPK as character default ""
     Public Data aRelation    as array     default {}
@@ -568,11 +569,12 @@ Method SetRelation( oAttr as object ) as variant Class GwDataAccess
 
     if !Empty(oAttr)
 
-        ::cAliasFrom := oAttr:GetValueByKey('AliasFrom')
-        ::cAliasJoin := oAttr:GetValueByKey('AliasJoin')
-        ::cIndexFrom := oAttr:GetValueByKey('IndexFrom')
-        ::cIndexJoinFK := oAttr:GetValueByKey('IndexJoinFK')
-        ::cIndexJoinPK := oAttr:GetValueByKey('IndexJoinPK')
+        ::cAliasFrom   := if( oAttr:HasName('AliasFrom'  ), oAttr:GetValueByKey('AliasFrom'  ), "" )
+        ::cAliasJoin   := if( oAttr:HasName('AliasJoin'  ), oAttr:GetValueByKey('AliasJoin'  ), "" )
+        ::cIndexFrom   := if( oAttr:HasName('IndexFrom'  ), oAttr:GetValueByKey('IndexFrom'  ), "" )
+        ::cKeyFrom     := if( oAttr:HasName('KeyFrom'    ), oAttr:GetValueByKey('KeyFrom'    ), "" )
+        ::cIndexJoinFK := if( oAttr:HasName('IndexJoinFK'), oAttr:GetValueByKey('IndexJoinFK'), "" )
+        ::cIndexJoinPK := if( oAttr:HasName('IndexJoinPK'), oAttr:GetValueByKey('IndexJoinPK'), "" )
 
     endif
 
@@ -582,15 +584,16 @@ Method SetRelation( oAttr as object ) as variant Class GwDataAccess
 
     oRelation := GwDataRelation():New()
 
-    if  !Empty(::cAliasFrom) .And.;
-        !Empty(::cAliasJoin) .And.;
-        !Empty(::cIndexFrom) .And.;
-        !Empty(::cIndexJoinFK) .And.;
-        !Empty(::cIndexJoinPK)
+    if  !Empty( ::cAliasFrom   ) .And.;
+        !Empty( ::cAliasJoin   ) .And.;
+        !Empty( ::cIndexFrom   ) .And.; // obs.: cIndexFrom opcional
+        !Empty( ::cIndexJoinFK ) .And.;
+        !Empty( ::cIndexJoinPK )
 
-        oRelation:cAliasFrom := ::cAliasFrom
-        oRelation:cAliasJoin := ::cAliasJoin
-        oRelation:cIndexFrom := ::cIndexFrom
+        oRelation:cAliasFrom   := ::cAliasFrom
+        oRelation:cAliasJoin   := ::cAliasJoin
+        oRelation:cIndexFrom   := ::cIndexFrom
+        oRelation:cKeyFrom     := ::cKeyFrom
         oRelation:cIndexJoinFK := ::cIndexJoinFK
         oRelation:cIndexJoinPK := ::cIndexJoinPK
 
