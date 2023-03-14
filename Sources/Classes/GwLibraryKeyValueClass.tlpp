@@ -14,10 +14,12 @@ Class GwKeyValue
     Public Data aKeyValue as array default {}
 
     Public Method New() Constructor
-    Public Method Add()
-    Public Method Length()
-    Public Method GetAllValues()
-    Public Method GetValueByKey()
+    Public Method Add( cKey as character, xValue as variant )
+    Public Method Length() as numeric
+    Public Method GetAllValues() as array
+    Public Method GetNameByPosition( nPos as numeric ) as character
+    Public Method GetValueByPosition( nPos as numeric ) as variant
+    Public Method GetValueByKey( xSearch as variant ) as variant
 
 EndClass
 
@@ -36,7 +38,7 @@ Method Add( cKey as character, xValue as variant ) Class GwKeyValue
 Return
 
 
-Method Length() Class GwKeyValue
+Method Length() as numeric Class GwKeyValue
 
     Local nResult := 0
 
@@ -45,7 +47,42 @@ Method Length() Class GwKeyValue
 Return nResult
 
 
-Method GetValueByKey( xSearch as variant ) Class GwKeyValue
+Method GetAllValues() as array Class GwKeyValue
+
+    Local aKeyValue := {} as array
+
+    aKeyValue := aClone(::aKeyValue)
+
+Return aKeyValue
+
+
+Method GetNameByPosition( nPos as numeric ) as character Class GwKeyValue // TODO: testar...
+
+    Local cRet := "" as character
+
+    Default nPos := 0
+
+    if nPos > 0
+        cRet := ::aKeyValue[nPos,1]
+    endif
+
+Return cRet
+
+
+Method GetValueByPosition( nPos as numeric ) as variant Class GwKeyValue // TODO: testar...
+
+    Local xRet := nil as variant
+
+    Default nPos := 0
+
+    if nPos > 0
+        xRet := ::aKeyValue[nPos,2]
+    endif
+
+Return xRet
+
+
+Method GetValueByKey( xSearch as variant ) as variant Class GwKeyValue
 
     Local nPos := 0 as numeric
     Local xRet := nil as variant
@@ -57,12 +94,3 @@ Method GetValueByKey( xSearch as variant ) Class GwKeyValue
     endif
 
 Return xRet
-
-
-Method GetAllValues() Class GwKeyValue
-
-    Local aKeyValue := {} as array
-
-    aKeyValue := aClone(::aKeyValue)
-
-Return aKeyValue
