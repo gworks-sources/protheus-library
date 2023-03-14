@@ -1,5 +1,5 @@
-#include 'totvs.ch'
-#include "msobject.ch"
+#include "TOTVS.ch"
+#include "MsObject.ch"
 
 namespace Gworks.Library.Classes
 
