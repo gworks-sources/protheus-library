@@ -25,13 +25,6 @@ Class GwDataRelation
     Public Method New( oAttr ) Constructor
 
     // Métodos públicos da classe
-    Public Method SetAliasFrom( cValue as character ) as variant
-    Public Method SetAliasJoin( cValue as character ) as variant
-    Public Method SetIndexFrom( cValue as character ) as variant
-    Public Method SetIndexJoin( cValue as character ) as variant
-    Public Method SetFieldIdFrom( cValue as character ) as variant
-    Public Method SetFieldIdJoin( cValue as character ) as variant
-    Public Method SetFieldIdJoinFK( cValue as character ) as variant
     Public Method Join() as logical
     Public Method Search( cFieldName as character, xContent as variant ) as logical
     Public Method GetSearchResult() as object
