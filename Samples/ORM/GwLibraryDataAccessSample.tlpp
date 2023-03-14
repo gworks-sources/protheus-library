@@ -4,6 +4,32 @@ using namespace Gworks.Library.Classes
 
 namespace Gworks.Sample.Classes
 
+
+Static Function fSetEnv()
+
+    Local cJobEmp := "01" as character
+    Local cJobFil := "01" as character
+    Local aTables := {"SA1", "SC5", "SC6"} as array
+
+    RPCSetEnv(;
+        /* cRpcEmp  */ cJobEmp,;
+        /* cRpcFil  */ cJobFil,;
+        /* cEnvUser */ ,;
+        /* cEnvPass */ ,;
+        /* cEnvMod  */ ,;
+        /* cFunName */ ,;
+        /* aTables  */ aTables)
+
+Return
+
+
+Static Function fResetEnv()
+
+    RpcClearEnv()
+
+Return
+
+
 User Function GwDataAccessExemploSimples() // Gworks.Sample.Classes.U_GwDataAccessExemploSimples
 
     Local cNome := "" as character
@@ -24,11 +50,68 @@ User Function GwDataAccessExemploSimples() // Gworks.Sample.Classes.U_GwDataAcce
 Return
 
 
-User Function GwDataAccessExemploComRelacionamento() // Gworks.Sample.Classes.U_GwDataAccessExemploComRelacionamento
+User Function GwDataAccessExemploComRelacionamentoPorIndice() // Gworks.Sample.Classes.U_GwDataAccessExemploComRelacionamentoPorIndice
 
-    Local cJobEmp := "01" as character
-    Local cJobFil := "01" as character
-    Local aTables := {"SA1", "SC5", "SC6"} as array
+    Local oAttr   as object
+    Local oData   as object
+
+    fSetEnv()
+
+    oAttr := GwKeyValue():New()
+    oAttr:Add( 'AliasFrom'  , 'SC5'               )
+    oAttr:Add( 'AliasJoin'  , 'SC6'               )
+    oAttr:Add( 'IndexFrom'  , 'C5_FILIAL+C5_NUM'  ) // o índice da tabela principal é compatível...
+    oAttr:Add( 'KeyFrom'    , ''                  )
+    oAttr:Add( 'IndexJoinFK', 'C6_FILIAL+C6_NUM'  ) // ...com o índice da tabela relacionada.
+    oAttr:Add( 'IndexJoinPK', 'C6_FILIAL+C6_ITEM' )
+
+    oData := GwDataAccess():New("SC5")
+    oData:SelectArea()
+    oData:SetOrder('C5_FILIAL+C5_NUM')
+    oData:GoTop()
+    if oData:Seek('491176')
+        if oData:SetRelation(oAttr)
+            ConOut("Relacionamento por índice criado entre SC5 e SC6!")
+        endif
+
+    endif
+
+    fResetEnv()
+
+Return
+
+
+User Function GwDataAccessExemploComRelacionamentoPorChave() // Gworks.Sample.Classes.U_GwDataAccessExemploComRelacionamentoPorChave
+
+    Local oAttr   as object
+    Local oData   as object
+
+    fSetEnv()
+
+    oAttr := GwKeyValue():New()
+    oAttr:Add( 'AliasFrom'  , 'SC5'                   )
+    oAttr:Add( 'AliasJoin'  , 'DA0'                   )
+    oAttr:Add( 'IndexFrom'  , 'C5_FILIAL+C5_NUM'      ) // o índice da tebela principal não é compatível
+    oAttr:Add( 'KeyFrom'    , 'C5_FILIAL+C5_TABELA'   )
+    oAttr:Add( 'IndexJoinFK', 'DA0_FILIAL+DA0_CODTAB' ) // ...com o índice da tabela relacionada. Neste caso é necessário o uso do atributo KeyFrom.
+    oAttr:Add( 'IndexJoinPK', 'DA0_FILIAL+DA0_CODTAB' )
+
+    oData := GwDataAccess():New("SC5")
+    oData:SelectArea()
+    oData:SetOrder('C5_FILIAL+C5_NUM')
+    oData:GoTop()
+    if oData:Seek('491176')
+        if oData:SetRelation(oAttr)
+            ConOut("Relacionamento por chave criado entre SC5 e DA0!")
+        endif
+    endif
+
+    fResetEnv()
+
+Return
+
+
+User Function GwDataAccessExemploDetalhado // Gworks.Sample.Classes.U_GwDataAccessExemploDetalhado
 
     Local nI     := 0  as numeric
     Local nJ     := 0  as numeric
@@ -41,61 +124,50 @@ User Function GwDataAccessExemploComRelacionamento() // Gworks.Sample.Classes.U_
     Local oResult as object
 
     oAttr := GwKeyValue():New()
-    oAttr:Add('AliasFrom', 'SC5')
-    oAttr:Add('AliasJoin', 'SC6')
-    oAttr:Add('IndexFrom', 'C5_FILIAL+C5_NUM')
-    oAttr:Add('IndexJoinFK', 'C6_FILIAL+C6_NUM')
-    oAttr:Add('IndexJoinPK', 'C6_FILIAL+C6_ITEM')
+    oAttr:Add( 'AliasFrom'  , 'SC5'               )
+    oAttr:Add( 'AliasJoin'  , 'SC6'               )
+    oAttr:Add( 'IndexFrom'  , 'C5_FILIAL+C5_NUM'  ) // o índice da tabela principal é compatível...
+    oAttr:Add( 'KeyFrom'    , ''                  )
+    oAttr:Add( 'IndexJoinFK', 'C6_FILIAL+C6_NUM'  ) // ...com o índice da tabela relacionada.
+    oAttr:Add( 'IndexJoinPK', 'C6_FILIAL+C6_ITEM' )
 
-    RPCSetEnv(;
-        /* cRpcEmp  */ cJobEmp,;
-        /* cRpcFil  */ cJobFil,;
-        /* cEnvUser */ ,;
-        /* cEnvPass */ ,;
-        /* cEnvMod  */ ,;
-        /* cFunName */ ,;
-        /* aTables  */ aTables)
+    oData := GwDataAccess():New("SC5")
+    oData:SelectArea()
+    oData:SetOrder('C5_FILIAL+C5_NUM')
+    oData:GoTop()
+    if oData:Seek('491176')
+        if oData:SetRelation(oAttr)
 
-        oData := GwDataAccess():New("SC5")
-        oData:SelectArea()
-        oData:SetOrder('C5_FILIAL+C5_NUM')
-        oData:GoTop()
-        if oData:Seek('491176')
+            ConOut("Relacionamento por índice criado entre SC5 e SC6!")
 
-            ConOut("Localizou o pedido...")
-
-            if oData:SetRelation(oAttr)
-
-                ConOut("Definiu um relacionamento...")
-
-                if oData:RelationSearch('C6_QTDVEN',15)
-                    ConOut("Localizou um item...")
-                    oResult := oData:RelationGetSearchResult()
-                endif
-
-                ConOut('Retornando os campos C6_PRODUTO e C6_TES..')
-                oResult := oData:RelationGetValues({'C6_PRODUTO','C6_TES'})
-
-                ConOut('Retornando C6_TES do item 7 do pedido...')
-                cTes := oResult:GetValueByKey('0107'):GetValueByKey('C6_TES')
-
-                ConOut('Imprimindo C6_PRODUTO e C6_TES de todos os itens do pedido respectivamente...') // TODO: testar...
-                for nI:=1 to len(oResult:Length())
-                    cLinha := oResult:GetNameByPosition(nI)
-                    oField := oResult:GetValueByPosition(nI)
-                    ConOut( "Imprimindo valores referente aos itens: " + CRLF +;
-                            "Filial: " + Left(cLinha,2) + CRLF +;
-                            "Item: " + Right(cLinha,2) )
-                    for nJ:=1 to len(oField:Length)
-                        cField := oField:GetNameByPosition(nJ)
-                        cValue := oField:GetValueByPosition(nJ)
-                        ConOut( " - " + cField + ": " + cValue )
-                    next
-                next
-
+            ConOut("...procurnado itens do pedido em que o campo C6_QTDVEN seja igual à 15")
+            if oData:RelationSearch('C6_QTDVEN',15)
+                oResult := oData:RelationGetSearchResult()
             endif
 
+            ConOut('...retornando o conteúdo dos campos C6_PRODUTO e C6_TES em objeto KeyValue')
+            oResult := oData:RelationGetValues({'C6_PRODUTO','C6_TES'})
+
+            ConOut('...retornando o conteúdo do campo C6_TES referente ao item 7 do pedido')
+            cTes := oResult:GetValueByKey('0107'):GetValueByKey('C6_TES')
+
+            ConOut('...imprimindo o conteúdo dos campos C6_PRODUTO e C6_TES de todos os itens do pedido ') // TODO: testar...
+            for nI:=1 to len(oResult:Length())
+                cLinha := oResult:GetNameByPosition(nI)
+                oField := oResult:GetValueByPosition(nI)
+                ConOut( "...imprimindo valores referente aos itens: " + CRLF +;
+                        "Filial: " + Left(cLinha,2) + CRLF +;
+                        "Item: " + Right(cLinha,2) )
+                for nJ:=1 to len(oField:Length)
+                    cField := oField:GetNameByPosition(nJ)
+                    cValue := oField:GetValueByPosition(nJ)
+                    ConOut( " - " + cField + ": " + cValue )
+                next
+            next
+
         endif
+
+    endif
 
     RpcClearEnv()
 
