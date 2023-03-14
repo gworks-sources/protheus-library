@@ -22,6 +22,7 @@ Class GwDataRelation
     // Atributos internos da classe
     Private Data oSearchResult as object    default nil
 
+    // Métodos construtores
     Public Method New( oAttr ) Constructor
 
     // Métodos públicos da classe
