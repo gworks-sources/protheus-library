@@ -4,16 +4,41 @@ using namespace Gworks.Library.Classes
 
 namespace Gworks.Sample.Classes
 
-User Function GwDataAccessSample() // Gworks.Sample.Classes.U_GwDataAccessSample
+User Function GwDataAccessExemploSimples() // Gworks.Sample.Classes.U_GwDataAccessExemploSimples
 
-    Local cJobEmp := "01"
-    Local cJobFil := "01"
-    Local aTables := {"SA1","SC5","SC6"}
+    Local cNome := "" as character
 
-    Local oAttr
-    Local oData
-    Local oResult
-    Local cTes := "" as character
+    Local oData as object
+
+    oData := GwDataAccess():New('SA1')
+    oData:SetOrder('A1_FILIAL+A1_COD+A1_LOJA')
+    oData:GoTop()
+    if oData:Seek('001910')
+
+        cNome := oData:GetValue('A1_NOME')
+
+        ConOut("O nome do cliente é " + cNome + ".")
+
+    endif
+
+Return
+
+
+User Function GwDataAccessExemploComRelacionamento() // Gworks.Sample.Classes.U_GwDataAccessExemploComRelacionamento
+
+    Local cJobEmp := "01" as character
+    Local cJobFil := "01" as character
+    Local aTables := {"SA1", "SC5", "SC6"} as array
+
+    Local nI     := 0  as numeric
+    Local nJ     := 0  as numeric
+    Local cTes   := "" as character
+    Local cField := "" as character
+    Local cValue := "" as character
+
+    Local oAttr   as object
+    Local oField  as object
+    Local oResult as object
 
     oAttr := GwKeyValue():New()
     oAttr:Add('AliasFrom', 'SC5')
@@ -53,6 +78,20 @@ User Function GwDataAccessSample() // Gworks.Sample.Classes.U_GwDataAccessSample
 
                 ConOut('Retornando C6_TES do item 7 do pedido...')
                 cTes := oResult:GetValueByKey('0107'):GetValueByKey('C6_TES')
+
+                ConOut('Imprimindo C6_PRODUTO e C6_TES de todos os itens do pedido respectivamente...') // TODO: testar...
+                for nI:=1 to len(oResult:Length())
+                    cLinha := oResult:GetNameByPosition(nI)
+                    oField := oResult:GetValueByPosition(nI)
+                    ConOut( "Imprimindo valores referente aos itens: " + CRLF +;
+                            "Filial: " + Left(cLinha,2) + CRLF +;
+                            "Item: " + Right(cLinha,2) )
+                    for nJ:=1 to len(oField:Length)
+                        cField := oField:GetNameByPosition(nJ)
+                        cValue := oField:GetValueByPosition(nJ)
+                        ConOut( " - " + cField + ": " + cValue )
+                    next
+                next
 
             endif
 
