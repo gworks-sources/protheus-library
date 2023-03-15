@@ -2,8 +2,7 @@
 
 using namespace Gworks.Library.Classes
 
-namespace Gworks.Sample.Classes
-
+namespace Gworks.Sample.Orm
 
 Static Function fSetEnv()
 
