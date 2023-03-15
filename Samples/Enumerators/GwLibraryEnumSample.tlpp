@@ -1,0 +1,33 @@
+#include "TOTVS.ch"
+#include "TLPP-Core.th"
+#include "TLPP-Object.th"
+
+@annotation attr
+    Description as character
+@end
+
+using namespace Gworks.Library.Classes
+
+namespace Gworks.Sample.Enum
+
+Class StatusTipoDocumentoXmlEnum From GwEnum
+
+    @attr(Description = 'Arquivo válido')
+    Public Data cArquivoValido as character default 'S' // success
+
+    @attr(Description = 'Arquivo inválido')
+    Public Data cArquivoInvalido as character default 'E' // error
+
+    Public Method New() Constructor
+    Public Method GetDescription() as character
+
+EndClass
+
+Method New() Class DocumentoXmlEnum
+
+    ::cArquivoValido := 'S'
+    ::cArquivoInvalido := 'E'
+
+    _Super:New(Self) // TODO: testar...
+
+Return Self

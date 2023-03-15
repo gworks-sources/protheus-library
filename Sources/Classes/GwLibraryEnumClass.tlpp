@@ -1,0 +1,44 @@
+#include "TOTVS.ch"
+#include "TLPP-Core.th"
+#include "TLPP-Object.th"
+
+namespace Gworks.Library.Classes
+
+Class GwEnum
+
+    Public Data oEnum as object default nil
+
+    Public Method New() Constructor
+    Public Method SetEnum( oSelf as object ) as variant
+    Public Method GetDescription() as character
+
+EndClass
+
+
+Method New( oSelf as object ) Class GwEnum
+
+    if Empty(::oSelf)
+        UserException("GwEnum:New - Atributo oSelf inválido!")
+    endif
+
+    ::oEnum := oSelf
+
+Return Self
+
+
+Method GetDescription( cAttrName as character ) as character Class GwEnum
+
+    Local jResult := {} as json
+    Local cResult := "" as character
+
+    Default cAttrName := "Description"
+
+    if Empty(::oEnum)
+        UserException("GwEnum:GetDescription - Atributo oEnum inválido!")
+    endif
+
+    jResult := Reflection.getDataAnnotation(::oEnum, cAttrName, 'attr')
+
+    cResult := jRet[cAttrName]
+
+Return cResult
