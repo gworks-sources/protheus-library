@@ -36,6 +36,7 @@ User Function GwDataAccessExemploSimples() // Gworks.Sample.Classes.U_GwDataAcce
     Local oData as object
 
     oData := GwDataAccess():New('SA1')
+    oData:SelectArea()
     oData:SetOrder('A1_FILIAL+A1_COD+A1_LOJA')
     oData:GoTop()
     if oData:Seek('001910')
