@@ -3,7 +3,7 @@
 using namespace Gworks.Library.Classes
 using namespace Gworks.Library.Utils
 
-namespace Gworks.library.functions
+namespace Gworks.Library.Functions
 
 User Function GwGetFieldArray(cAlias)
 
@@ -39,6 +39,7 @@ User Function GwGetFieldArray(cAlias)
             aAdd(aFields,AllTrim(X3DIC->&("X3_CAMPO")))
             X3DIC->(DbSkip())
         EndDo
+
     CATCH oError
         oError:ShowError()
     FINALLY
