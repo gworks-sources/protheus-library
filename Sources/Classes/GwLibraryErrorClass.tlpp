@@ -221,6 +221,7 @@ Method ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as lo
     Local cShowError          := ""  as character
     Local lHasErrorMessage    := .F. as logical
     Local lHasAutoGrLog       := .F. as logical
+    Local lBlind              := .F. as logical
 
     Default cStyle            := "HELP"
     Default cTitle            := if( !Empty(::cTitle), ::cTitle, FunName() )
@@ -228,6 +229,7 @@ Method ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as lo
     Default lDefineWithError  := .T. // Define o estado da instância da classe para "com erro"
     Default lUpdateErrorClass := .T. // Atualiza os atributos da classe ErrorClass()
 
+    lBlind           := IsBlind()
     lHasErrorMessage := !Empty(::cError)
     lHasAutoGrLog    := !Empty(::cAutoGRLog)
 
@@ -239,12 +241,15 @@ Method ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as lo
     endif
 
     do case
-        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "INFO"  ; FwAlertInfo   ( cShowError, cTitle )
-        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "STOP"  ; FwAlertError  ( cShowError, cTitle )
-        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "ALERT" ; FwAlertWarning( cShowError, cTitle )
-        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "HELP"  ; ::DisplayHelp ( cTitle, ::cError, ::cSuggestion )
-        case lHasAutoGrLog    .And. lShowAutoGRLog                    ; ::ShowAutoGRLog()
+        case !lBlind .And. lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "INFO"  ; FwAlertInfo   ( cShowError, cTitle )
+        case !lBlind .And. lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "STOP"  ; FwAlertError  ( cShowError, cTitle )
+        case !lBlind .And. lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "ALERT" ; FwAlertWarning( cShowError, cTitle )
+        case !lBlind .And. lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "HELP"  ; ::DisplayHelp ( cTitle, ::cError, ::cSuggestion )
     endcase
+
+    if !lBlind .And. lHasAutoGrLog  .And. lShowAutoGRLog
+        ::ShowAutoGRLog()
+    endif
 
     if lDefineWithError
         ::DefineWithError()
