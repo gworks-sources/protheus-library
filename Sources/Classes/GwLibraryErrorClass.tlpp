@@ -33,7 +33,7 @@ Class GwError From ErrorClass
     Public Method SetAutoGRLog( cAutoGRLog as character ) // define a mensagem para exibição via função MostraErro()
     Public Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) as variant // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
     Public Method ShowAutoGRLog() as variant // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
-    Public Method ThrowException( cFunName as character, cMethod as character ) as variant // Lança excessão de erro
+    Public Method ThrowException( cFunName as character, cMethod as character ) as variant // Lança exceção de erro
 
 EndClass
 
@@ -315,7 +315,7 @@ Method ShowAutoGRLog() as variant Class GwError
 Return
 
 /*/{Protheus.doc} GwError::ThrowException( cFunName as character, cMethod as character ) as variant
-Lança excessão de erro.
+Lança exceção de erro.
 @type method
 @version 12.1.33
 @author Gworks-Giovani
