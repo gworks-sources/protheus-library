@@ -30,6 +30,14 @@ Class GwConsoleLog
 
 EndClass
 
+/*/{Protheus.doc} GwConsoleLog::New
+Cria instância da classe.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@return object, instância da classe criada.
+/*/
 Method New() Class GwConsoleLog
 
 	::lFwLogMsg     := .F.
@@ -39,8 +47,15 @@ Method New() Class GwConsoleLog
 
 	::oError := GwError():Create() // Cria uma instância do objeto de erro vazio
 
-Return
+Return Self
 
+/*/{Protheus.doc} GwConsoleLog::Clear() as variant
+Recicla o objeto limpando todos seus atributos.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+/*/
 Method Clear() as variant Class GwConsoleLog
 	::cLog := ""
 	::cLastMessage := ""
