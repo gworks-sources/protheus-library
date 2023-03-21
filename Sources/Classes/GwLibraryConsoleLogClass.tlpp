@@ -1,0 +1,221 @@
+#include "TOTVS.ch"
+
+#define CRLF chr(13)+chr(10)
+#define CRLF2 CRLF+CRLF
+
+using namespace Gworks.Library.Classes
+
+namespace Gworks.Library.Functions
+
+Class GwConsoleLog
+
+	Public Data lFwLogMsg      as logical   default .F.
+	Public Data lPrefix        as logical   default .T.
+	Public Data lCreateLog     as logical   default .T.
+	Public Data lConsolePrint  as logical   default .F.
+	Public Data cLog           as character default ""
+	Public Data cLastMessage   as character default ""
+	Public Data cLogFile       as character default ""
+
+	Public Method New() Constructor
+	Public Method Clear() as variant
+	Public Method UseFwLogMsgClass() as variant
+	Public Method EnablePrefix() as variant
+	Public Method EnableLogFile() as variant
+	Public Method EnableConsolePrint() as variant
+	Public Method SetMessage( cMessage as character, lConsolePrint as logical ) as variant
+	Public Method CreateLogFile( cFileName as character ) as variant
+	Public Method GetLastMessage() as character
+	Public Method GetLogFile() as character
+
+EndClass
+
+Method New() Class GwConsoleLog
+
+	::lFwLogMsg     := .F.
+	::lPrefix       := .T.
+	::lCreateLog    := .T.
+	::lConsolePrint := .T.
+
+	::oError := GwError():Create() // Cria uma instância do objeto de erro vazio
+
+Return
+
+Method Clear() as variant Class GwConsoleLog
+	::cLog := ""
+	::cLastMessage := ""
+	::cLogFile := ""
+Return
+
+/*/{Protheus.doc} GwConsoleLog::UseFwLogMsgClass( lArg as logical ) as variant
+Define se deve (.T.) ou não (.F.) imprimir no console usando a função FwLogMsg.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 20/09/2022
+/*/
+Method UseFwLogMsgClass( lArg as logical ) as variant Class GwConsoleLog
+	::lFwLogMsg := lArg
+Return
+
+/*/{Protheus.doc} GwConsoleLog::EnablePrefix( lArg as logical ) as variant
+Define se deve (.T.) ou não (.F.) concatenar à mensagem de log com o prefixo no formato:
+ - Prefixo..: "Empresa|Filial|FunName|Data|Hora|Mensagem";
+ - Ex.......: "01|010002|FSJB037|23/09/2022|11:48:58|INICIO DO PROCESSAMENTO".
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 20/09/2022
+/*/
+Method EnablePrefix( lArg as logical ) as variant Class GwConsoleLog
+	::lPrefix := lArg
+Return
+
+/*/{Protheus.doc} GwConsoleLog::EnableLogFile( lArg as logical ) as variant
+Define se deve (.T.) ou não (.F.) habilitar a gravação do log em arquivo de texto.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 20/09/2022
+/*/
+Method EnableLogFile( lArg as logical ) as variant Class GwConsoleLog
+
+	Local lGerLog := .T. as logical
+
+	lGerLog := SuperGetMV("GW_GERLOG",.F.,.T.) // parâmetro para ligar/desligar a criação de log em disco
+
+	if !lGerLog
+		ConOut("GwConsoleLog:CreateLogFile - Criação do arquivo de log desativada por meio do parâmetro GW_GERLOG!")
+		Return
+	endif
+
+	::lCreateLog := lArg
+
+Return
+
+/*/{Protheus.doc} GwConsoleLog::EnableConsolePrint( lArg as logical ) as variant
+Define se deve (.T.) ou não (.F.) habilitar a impressão da mensagem em console.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 20/09/2022
+/*/
+Method EnableConsolePrint( lArg as logical ) as variant Class GwConsoleLog
+	::lConsolePrint := lArg
+Return
+
+/*/{Protheus.doc} GwConsoleLog::SetMessage( lArg as logical, lConsolePrint as logical ) as variant
+Define a mensagem do log.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 20/09/2022
+/*/
+Method SetMessage( cMessage as character, lConsolePrint as logical ) as variant Class GwConsoleLog
+
+	Local nStart := Seconds() as numeric
+
+	Default lConsolePrint := ::lConsolePrint
+
+	:: cLastMessage := cMessage
+
+	if ::lPrefix
+		// Define o prefixo da mensagem.
+		// Ex.: "01|010002|FSJB037|23/09/2022|11:48:58|INICIO DO PROCESSAMENTO"
+		cMessage := ;
+			cEmpAnt + "|" +;
+			cFilAnt + "|" +;
+			FunName() + "|" +;
+			dToC(Date()) + "|" +;
+			Time() + "|" +;
+			cMessage
+	endif
+
+	if !Empty(cMessage) .And. lConsolePrint
+
+		if ::lFwLogMsg
+			FwLogMsg( ;
+				"INFO",;             // cSeverity
+				,;                   // cTransactionId
+				"CONOUT",;           // cGroup
+				FunName(),;          // cCategory
+				"",;                 // cStep
+				"01",;               // cMessageId
+				cMessage,;           // cMessage
+				0,;                  // nMensure
+				(nStart-Seconds()),; // nElapseTime
+				{};                  // aMessage
+			)
+
+		else
+			ConOut(cMessage)
+		endif
+
+	endif
+
+	if ::lCreateLog
+		::cLog += cMessage + CRLF
+	endif
+
+Return
+
+/*/{Protheus.doc} GwConsoleLog::CreateLogFile( cFileName as character ) as variant
+Salva o arquivo de log em disco.
+@type function
+@version 12.1.33
+@author Brasoft | Gworks - Giovani Soares
+@since 23/09/2022
+@param cFileName, character, nome do arquivo de log.
+/*/
+Method CreateLogFile( cFileName as character ) as variant Class GwConsoleLog
+
+	Default cFileName := FunName()
+
+	if Empty(cLog)
+		ConOut("GwConsoleLog:CreateLogFile - Atributo cLog não informado ou inválido!")
+		Return
+	endif
+
+	if !ExistDir("\log",,/*lChangeCase*/.F.)
+		if MakeDir("\log",,/*lChangeCase*/.F.) != 0
+			UserException('Falha ao criar o diretório "\log" no Rootpath do ambiente. Favor contatar o o suporte técnico.')
+		endif
+	endif
+
+	cFileName := cFileName+"-"+dToS(Date())+"-"+Time()+".log"
+	cFileName := StrTran(cFileName,":","")
+	cFileName := Lower(cFileName)
+
+    if !File("\log\"+cFileName)
+
+    	::cLogFile := "\log\"+cFileName
+
+		MemoWrite(::cLogFile, cLog)
+
+    endif
+
+Return
+
+/*/{Protheus.doc} GwConsoleLog::GetLastMessage() as character
+Retorna a última mensagem do log.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/20/2023
+@return variant, Última mensagem de log.
+/*/
+Method GetLastMessage() as character Class GwConsoleLog
+
+Return ::cLastMessage
+
+/*/{Protheus.doc} GwConsoleLog::GetLogFile() as character
+Retorna o caminho de onde o arquivo de log foi salvo/gerado.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/20/2023
+@return character, Path do arquivo de log.
+/*/
+Method GetLogFile() as character Class GwConsoleLog
+
+Return ::cLogFile
