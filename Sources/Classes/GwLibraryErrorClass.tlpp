@@ -11,110 +11,293 @@ namespace Gworks.Library.Classes
 
 Class GwError From ErrorClass
 
-    Public Data cError as character default ""
-    Public Data cSuggestion as character default ""
-    Public Data cTitleError as character default ""
-    Public Data cAutoGRLog as character default ""
-    Public Data lError as logical default .F.
-    Public Data lCanReplaced as logical default .T.
+    Public Data cError       as character default ""
+    Public Data cSuggestion  as character default ""
+    Public Data cTitle       as character default ""
+    Public Data cAutoGRLog   as character default ""
+    Public Data lError       as logical   default .F.
 
+    // Métodos construtores
     Public Method New() Constructor // construtor com argumentos
     Public Method Create() Constructor // construtor vazio
-    Public Method SetError() // define a mensagem de erro desejada
-    Public Method GetErrorByName() // retorna a mensagem de erro conforme sua definição em: "ERROR", "SUGGESTION", "TITLEERROR"
-    Public Method DefineWithError() // define que a instância da classe foi definida com erro
-    Public Method HasError() // indica que a instância da classe GwError foi definida como erro
-    Public Method ShowError() // exibe a mensagem de erro entre: "INFO", "STOP", "ALERT", "HELP"
-    Public Method SetAutoGRLog() // define a mensagem para exibição via função MostraErro()
-    Public Method SetAutoGRLogFromArray() // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
-    Public Method ShowAutoGRLog() // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
-    Public Method SetCanReplaced() // flag auxiliar para definir se a mensagem de erro definida na instância da classe pode ou não ser substituída
 
-    Protected Method SetHelp()
+    // Métodos internos
+    Protected Method DisplayHelp( cTitle as character, cErro as character, cSuggestion as character, oModel as object )
+
+    // Métodos públicos
+    Public Method Clear() as variant
+    Public Method SetError( cError as character, cSuggestion as character, cTitle as character, lError as logical ) as variant // define a mensagem de erro desejada
+    Public Method GetErrorByLabel( cOption as character ) as character // retorna a mensagem de erro conforme sua definição em: "ERROR", "SUGGESTION", "TITLEERROR"
+    Public Method DefineWithError( lError as logical ) // define que a instância da classe foi definida com erro
+    Public Method HasError() as logical // indica que a instância da classe GwError foi definida como erro
+    Public Method ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as logical, lDefineWithError as logical, lUpdateErrorClass as logical ) as variant // exibe a mensagem de erro entre: "INFO", "STOP", "ALERT", "HELP"
+    Public Method SetAutoGRLog( cAutoGRLog as character ) // define a mensagem para exibição via função MostraErro()
+    Public Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
+    Public Method ShowAutoGRLog() // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
 
 EndClass
 
-Method New(cError,cSuggestion,cTitleError,lError,lShowError,cOption) Class GwError; :New()
-    Default cError := ""
+/*/{Protheus.doc} GwError::New
+Instânciação com argumentos da classe.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param cError, character, Mensagem de errro.
+@param cSuggestion, character, Mensagem de sugestão para solução.
+@param cTitle, character, Título da mensagem de erro.
+@param lError, logical, Atributo para indicar o estado da instância, podendo ser: .T. "com erro" e .F. "sem erro".
+@param lShowError, logical, Se .T. já exibe a mensagem de erro conforme cStyle.
+@param cStyle, character, Estilo de exibição da mensagem de erro, podendo ser: Alert, Info, Warning ou Help.
+@return object, objeto instânciado.
+/*/
+Method New( cError      as character,;
+            cSuggestion as character,;
+            cTitle as character,;
+            lError      as logical,;
+            lShowError  as logical,;
+            cStyle      as character ) Class GwError; :New()
+
+    Default cError      := ""
     Default cSuggestion := ""
-    Default cTitleError := ""
-    Default lError := .T.
-    Default lShowError := .F.
-    Self:SetError(cError,cSuggestion,cTitleError,lError)
+    Default cTitle := ""
+    Default lError      := .T.
+    Default lShowError  := .F.
+
+    Self:SetError(cError, cSuggestion, cTitle, lError)
     if lShowError
-        Self:ShowError(cOption)
+        Self:ShowError(cStyle)
     endif
+
 Return Self
 
+/*/{Protheus.doc} GwError::Create
+Instânciação limpa da classe.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@return object, objeto instânciado.
+/*/
 Method Create() Class GwError; :New()
+
     Self:lError := .F.
-    Self:lCanReplaced := .T.
+
 Return Self
 
-Method SetError(cError,cSuggestion,cTitleError,lError) Class GwError
-    Default cError := ""
+/*/{Protheus.doc} GwError::DisplayHelp
+Método de uso interno para exibir a mensagem de Help().
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param cTitle, character, Título do help.
+@param cErro, character, Mensagem de erro.
+@param cSolucao, character, Mensagem de sugestão para a solução.
+@param oModel, object, objeto Model. Parâmetro opcional proveniente do uso do Framework MVC.
+@Obs Quando informado o oModel, será atualizado a mensagem de erro do próprio modelo por meio do método SetErrorMessage().
+/*/
+Method DisplayHelp( cTitle as character, cErro as character, cSuggestion as character, oModel as object ) Class GwError
+    Default cTitle      := ""
+    Default cErro       := ""
     Default cSuggestion := ""
-    Default cTitleError := FunName()
-    Default lError := .T.
-    Self:cError := cError
-    Self:cSuggestion := cSuggestion
-    Self:cTitleError := cTitleError
-    Self:lError := .T.
-    Self:lCanReplaced := .T.
-    Self:GenCode := 0
-    Self:Description := cError
+    Default oModel      := nil
+    If ValType(oModel) == "O" .And. oModel:ClassName() == "FWFORMMODEL"
+        oModel:SetErrorMessage(;
+            nil,;
+            nil,;
+            nil,;
+            nil,;
+            iif(!Empty(cTitle),cTitle,"Modelo/operação inválidos"),;
+            iif(!Empty(cErro),cErro,"Não foi possível validar o modelo de dados e/ou a operação realizada."),;
+            iif(!Empty(cSuggestion),cSuggestion,"Favor entrar em contato com o suporte técnico." ) ;
+        )
+    Else
+        Help(nil, nil, cTitle, nil, cErro, 1, 0, nil, nil, nil, nil, nil, {cSuggestion})
+    EndIf
 Return
 
-Method GetErrorByName(cOption) Class GwError
-    Local cRet := ""
-    Default cOption := ERROR
-    Do Case
-        Case cOption == "ERROR" ; cRet := Self:cError
-        Case cOption == "SUGGESTION" ; cRet := Self:cSuggestion
-        Case cOption == "TITLEERROR" ; cRet := Sefl:cTitleError
-    EndCase
+
+/*/{Protheus.doc} Gwerror::Clear
+Recicla o objeto limpando todos seus atributos.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+/*/
+Method Clear() as variant Class Gwerror
+
+    cError      := ""
+    cSuggestion := ""
+    cTitle      := ""
+    cAutoGRLog  := ""
+    lError      := .F.
+
+    // Atributos herdados da classe ErrorClass()
+    Self:GenCode      := 0
+    Self:Description  := cError
+
+Return
+
+/*/{Protheus.doc} GwError::SetError( cError as character, cSuggestion as character, cTitle as character, lError as logical ) as variant
+Define uma mensagem de erro para a instância da classe.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param cError, character, Mensagem de errro.
+@param cSuggestion, character, Mensagem de sugestão para solução.
+@param cTitle, character, Título da mensagem de erro.
+@param lError, logical, Atributo para indicar o estado da instância, podendo ser: .T. "com erro" e .F. "sem erro".
+/*/
+Method SetError( cError as character, cSuggestion as character, cTitle as character, lError as logical ) as variant Class GwError
+
+    Default cError      := ""
+    Default cSuggestion := ""
+    Default cTitle      := FunName()
+    Default lError      := .T.
+
+    Self:cError         := cError
+    Self:cSuggestion    := cSuggestion
+    Self:cTitle         := cTitle
+    Self:lError         := .T.
+
+    // Atributos herdados da classe ErrorClass()
+    Self:GenCode      := 0
+    Self:Description  := cError
+
+Return
+
+/*/{Protheus.doc} GwError::GetErrorByLabel( cLabel as character ) as character
+Retorna a mensagem de erro conforme label.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param cLabel, character, Nome da label entre: Error, Suggestion ou TitleError.
+@return character, Mensagem conforme label.
+/*/
+Method GetErrorByLabel( cLabel as character ) as character Class GwError
+
+    Local cRet := "" as character
+
+    Default cLabel := ERROR
+
+    do case
+        case AllTrim(Upper(cLabel)) == "ERROR"      ; cRet := Self:cError
+        case AllTrim(Upper(cLabel)) == "SUGGESTION" ; cRet := Self:cSuggestion
+        case AllTrim(Upper(cLabel)) == "TITLEERROR" ; cRet := Sefl:cTitle
+    endcase
+
 Return cRet
 
-Method HasError() Class GwError
-Return Self:lError
+/*/{Protheus.doc} GwError::DefineWithError( lError as logical ) as variant
+Define o estado de erro da classe.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param lError, logical, Atributo para indicar o estado da instância, podendo ser: .T. "com erro" e .F. "sem erro".
+/*/
+Method DefineWithError( lError as logical ) as variant Class GwError
 
-Method ShowError(cOption,cTitle,lShowAutoGRLog,lDefineWithError,lUpdateErrorClass) Class GwError
-    Local cShowError := ""
-    Default cOption := "HELP"
-    Default cTitle := ::cTitleError
-    Default lShowAutoGRLog := .T.
-    Default lDefineWithError := .T.
-    Default lUpdateErrorClass := .T.
-    If !Empty(::cSuggestion)
-        cShowError += CRLF2
-        cShowError += ::cSuggestion // TODO:revisar..
-    EndIf
-    Do Case
-        Case cOption == "INFO"  ; FwAlertInfo(cShowError,cTitle)
-        Case cOption == "STOP"  ; FwAlertError(cShowError,cTitle)
-        Case cOption == "ALERT" ; FwAlertWarning(cShowError,cTitle)
-        Case cOption == "HELP"  ; SetHelp(cTitle,::cError,::cSuggestion)
-    EndCase
-    If !Empty(::cAutoGRLog) .And. lShowAutoGRLog
-        ::ShowAutoGRLog()
-    EndIf
-    If lDefineWithError
-        ::DefineWithError()
-    EndIf
-    If lUpdateErrorClass
-        ::GenCode := 0
-        ::Description := cShowError
-    EndIf
+    Default lError := .T.
+
+    Self:lError := lError
+
 Return
 
-Method SetAutoGRLog(cAutoGRLog) Class GwError
+/*/{Protheus.doc} GwError::HasError() as logical
+Retorna o estado de erro da instância da classe.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@return variant, Se .T. está com erro e .F. sem erro.
+/*/
+Method HasError() as logical Class GwError
+
+Return Self:lError
+
+/*/{Protheus.doc} GwError::ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as logical, lDefineWithError as logical, lUpdateErrorClass as logical ) as variant
+Exibe a mensagem de erro conforme opção definida em cStyle.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param cStyle, character, Estilo de exibição da mensagem de erro, podendo ser: Alert, Info, Warning ou Help.
+@param cTitle, character, Título da mensagem de erro.
+@param lShowAutoGRLog, logical, Se .T. irá exibir também as mensagens proveniente de execuções automáticas como ExecAuto().
+@param lDefineWithError, logical, Se .T. altera o estado da instância para "com erro".
+@param lUpdateErrorClass, logical, Se .T. atualiza dados na classe herdada, ErrorClass().
+/*/
+Method ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as logical, lDefineWithError as logical, lUpdateErrorClass as logical ) as variant Class GwError
+
+    Local cShowError          := ""  as character
+    Local lHasErrorMessage    := .F. as logical
+    Local lHasAutoGrLog       := .F. as logical
+
+    Default cStyle            := "HELP"
+    Default cTitle            := if( !Empty(::cTitle), ::cTitle, FunName() )
+    Default lShowAutoGRLog    := .T. // Exibe mensagens de erro proveniente de execuções automáticas como rotina encapsuladas por meio da função ExecAuto()
+    Default lDefineWithError  := .T. // Define o estado da instância da classe para "com erro"
+    Default lUpdateErrorClass := .T. // Atualiza os atributos da classe ErrorClass()
+
+    lHasErrorMessage := !Empty(::cError)
+    lHasAutoGrLog    := !Empty(::cAutoGRLog)
+
+    if lHasErrorMessage
+        cShowError := ::cError
+        if !Empty(::cSuggestion)
+            cShowError := ::cShowError + CRLF2 + ::cSuggestion
+        endif
+    endif
+
+    do case
+        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "INFO"  ; FwAlertInfo   ( cShowError, cTitle )
+        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "STOP"  ; FwAlertError  ( cShowError, cTitle )
+        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "ALERT" ; FwAlertWarning( cShowError, cTitle )
+        case lHasErrorMessage .And. AllTrim(Upper(cStyle)) == "HELP"  ; ::DisplayHelp ( cTitle, ::cError, ::cSuggestion )
+        case lHasAutoGrLog    .And. lShowAutoGRLog                    ; ::ShowAutoGRLog()
+    endcase
+
+    if lDefineWithError
+        ::DefineWithError()
+    endif
+
+    if lUpdateErrorClass
+        ::GenCode := 0
+        ::Description := cDescription
+    endif
+
+Return
+
+/*/{Protheus.doc} GwError::SetAutoGRLog
+Define a mensagem de erro proveniente de execuções automáticas, como ExecAuto().
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param cAutoGRLog, character, Mensagem de erro, aviso ou log desejada.
+/*/
+Method SetAutoGRLog( cAutoGRLog as character ) Class GwError
     Self:cAutoGRLog := cAutoGRLog
 Return
 
-Method SetAutoGRLogFromArray(aError,cClassOrigin) Class GwError
+/*/{Protheus.doc} GwError::SetAutoGRLogFromArray
+Possui o mesmo propósito que o método SetAutoGRLog(), porém, obtem os dados
+a partir de um array no formato de execuções oriundas do Framework MVC.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@param aError, array, Dados do erro, aviso ou log.
+@param cClassOrigin, character,
+/*/
+Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) Class GwError
     Default cClassOrigin := "FwFormModel"
-    Do Case
-        Case Upper(cClassOrigin) == Upper("FwFormModel")
+    do case
+        case Upper(cClassOrigin) == Upper("FwFormModel")
             Self:cAutoGRLog := "Detalhes:" + CRLF
             Self:cAutoGRLog += "Id do formulário de origem: " + '[ ' + cValToChar(aError[01]) + ' ]' + CRLF
             Self:cAutoGRLog += "Id do campo de origem: "      + '[ ' + cValToChar(aError[02]) + ' ]' + CRLF
@@ -125,38 +308,17 @@ Method SetAutoGRLogFromArray(aError,cClassOrigin) Class GwError
             Self:cAutoGRLog += "Mensagem da solução: "        + '[ ' + cValToChar(aError[07]) + ' ]' + CRLF
             Self:cAutoGRLog += "Valor atribuído: "            + '[ ' + cValToChar(aError[08]) + ' ]' + CRLF
             Self:cAutoGRLog += "Valor anterior: "             + '[ ' + cValToChar(aError[09]) + ' ]' + CRLF
-    EndCase
+    endcase
 Return
 
+/*/{Protheus.doc} GwError::ShowAutoGRLog
+Exibe a mensagem de erro, aviso ou log, conforme defindo por ::cAutoGRLog.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+/*/
 Method ShowAutoGRLog() Class GwError
     AutoGRLog(::cAutoGRLog)
     MostraErro()
-Return
-
-Method DefineWithError(lError) Class GwError
-    Default lError := .T.
-    Self:lError := lError
-Return
-
-Method SetCanReplaced(lReplaced) Class GwError
-    Default lReplaced := .T.
-    ::lCanReplaced := lReplaced
-Return
-
-Method SetHelp(cTit,cErro,cSolucao,oModel) Class GwError
-    Default cTit     := ""
-    Default cErro    := ""
-    Default cSolucao := ""
-    Default oModel   := nil
-    If ValType(oModel) == "O" .And. oModel:ClassName() == "FWFORMMODEL"
-        oModel:SetErrorMessage( nil,;
-                                nil,;
-                                nil,;
-                                nil,;
-                                iif(!Empty(cTit),cTit,"Modelo/operação inválidos"),;
-                                iif(!Empty(cErro),cErro,"Não foi possível validar o modelo de dados e/ou a operação realizada."),;
-                                iif(!Empty(cSolucao),cSolucao,"Favor entrar em contato com o suporte técnico." ) )
-    Else
-        Help(nil, nil, cTit, nil, cErro, 1, 0, nil, nil, nil, nil, nil, {cSolucao})
-    EndIf
 Return
