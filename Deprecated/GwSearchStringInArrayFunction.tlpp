@@ -1,0 +1,38 @@
+#include "totvs.ch"
+
+using namespace Gworks.Library.Classes
+using namespace Gworks.Library.Utils
+
+namespace Gworks.library.functions
+
+User Function GwSearchStringInArray(aArray,cSearch,cIgnore)
+
+    Local oError as object
+	Local nResult := 0 as numeric
+	Local lRet := .F. as logical
+
+	Default cIgnore := ""
+
+    oError := GwError():Create()
+    oError:cError := "Erro ao pesquisar por string em array de elementos."
+    oError:cSuggestion := "Verifique se existe elemento(s) do array que não seja string ou entre em contato com o suporte técnico."
+    oError:cTitleError := "GwSearchStringInArray"
+    oError:lError := .F.
+
+    TRY
+		cSearch := AllTrim(cSearch)
+		nResult := 0
+		nResult := Ascan(aArray, { |x| Upper(x) == cSearch })
+		If nResult > 0
+			lRet := .T.
+		EndIf
+		If lRet;
+			.And. !Empty(cIgnore);
+			.And. AllTrim(aArray[nResult]) $ cIgnore
+			lRet := .F.
+		EndIf
+    CATCH oError
+		oError:ShowError()
+    ENDTRY
+
+Return lRet
