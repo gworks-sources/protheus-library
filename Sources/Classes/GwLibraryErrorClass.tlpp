@@ -19,7 +19,6 @@ Class GwError From ErrorClass
 
     // Métodos construtores
     Public Method New() Constructor // construtor com argumentos
-    Public Method Create() Constructor // construtor vazio
 
     // Métodos internos
     Protected Method DisplayHelp( cTitle as character, cErro as character, cSuggestion as character, oModel as object )
@@ -60,28 +59,14 @@ Method New( cError      as character,;
 
     Default cError      := ""
     Default cSuggestion := ""
-    Default cTitle := ""
-    Default lError      := .T.
+    Default cTitle      := ""
+    Default lError      := .F.
     Default lShowError  := .F.
 
     Self:SetError(cError, cSuggestion, cTitle, lError)
     if lShowError
         Self:ShowError(cStyle)
     endif
-
-Return Self
-
-/*/{Protheus.doc} GwError::Create
-Instânciação limpa da classe.
-@type method
-@version 12.1.33
-@author Gworks-Giovani
-@since 3/21/2023
-@return object, objeto instânciado.
-/*/
-Method Create() Class GwError; :New()
-
-    Self:lError := .F.
 
 Return Self
 
