@@ -52,7 +52,7 @@ Instânciação com argumentos da classe.
 /*/
 Method New( cError      as character,;
             cSuggestion as character,;
-            cTitle as character,;
+            cTitle      as character,;
             lError      as logical,;
             lShowError  as logical,;
             cStyle      as character ) Class GwError; :New()
