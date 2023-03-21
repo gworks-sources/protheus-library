@@ -31,8 +31,9 @@ Class GwError From ErrorClass
     Public Method HasError() as logical // indica que a instância da classe GwError foi definida como erro
     Public Method ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as logical, lDefineWithError as logical, lUpdateErrorClass as logical ) as variant // exibe a mensagem de erro entre: "INFO", "STOP", "ALERT", "HELP"
     Public Method SetAutoGRLog( cAutoGRLog as character ) // define a mensagem para exibição via função MostraErro()
-    Public Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
-    Public Method ShowAutoGRLog() // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
+    Public Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) as variant // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
+    Public Method ShowAutoGRLog() as variant // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
+    Public Method ThrowException( cFunName as character, cMethod as character ) as variant // Lança excessão de erro
 
 EndClass
 
@@ -284,7 +285,7 @@ a partir de um array no formato de execuções oriundas do Framework MVC.
 @param aError, array, Dados do erro, aviso ou log.
 @param cClassOrigin, character,
 /*/
-Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) Class GwError
+Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) as variant Class GwError
     Default cClassOrigin := "FwFormModel"
     do case
         case Upper(cClassOrigin) == Upper("FwFormModel")
@@ -308,7 +309,30 @@ Exibe a mensagem de erro, aviso ou log, conforme defindo por ::cAutoGRLog.
 @author Gworks-Giovani
 @since 3/21/2023
 /*/
-Method ShowAutoGRLog() Class GwError
+Method ShowAutoGRLog() as variant Class GwError
     AutoGRLog(::cAutoGRLog)
     MostraErro()
+Return
+
+/*/{Protheus.doc} GwError::ThrowException( cFunName as character, cMethod as character ) as variant
+Lança excessão de erro.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+@obs O estado da instância deve estar em "com erro".
+/*/
+Method ThrowException( cFunName as character, cMethod as character ) as variant Class GwError
+
+    Local cPrefix := "" as character
+
+    Default cFunName := FunName()
+    Default cMethod := ""
+
+    cPrefix := if( !Empty(cMethod), cFunName + ":" + cMethod, cFunName ) + ": "
+
+    if ::lError
+        UserException( cPrefix + ::cError )
+    endif
+
 Return
