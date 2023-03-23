@@ -5,24 +5,36 @@
 
 using namespace Gworks.Library.Classes
 
-namespace Gworks.Library.Functions
+namespace Gworks.Library.Classes
 
 Class GwConsoleLog
 
-	Public Data lFwLogMsg      as logical   default .F.
-	Public Data lPrefix        as logical   default .T.
-	Public Data lCreateLog     as logical   default .T.
-	Public Data lConsolePrint  as logical   default .F.
-	Public Data cLog           as character default ""
-	Public Data cLastMessage   as character default ""
-	Public Data cLogFile       as character default ""
+	Public Data lFwLogMsg       as logical   default .F.
+	Public Data lPrefix         as logical   default .T.
+	Public Data lCreateLog      as logical   default .T.
+	Public Data lConsolePrint   as logical   default .F.
+	Public Data cLog            as character default ""
+	Public Data cState          as character default ""
+	Public Data cLastMessage    as character default ""
+	Public Data cLogFile        as character default ""
+	Public Data cLogId          as character default ""
+	Public Data cLogDescription as character default ""
 
+	// Métodos construtores
 	Public Method New() Constructor
+
+	// Métodos internos
+	Public Method Init() as variant
+
+	// Métodos públicos
 	Public Method Clear() as variant
 	Public Method UseFwLogMsgClass() as variant
 	Public Method EnablePrefix() as variant
 	Public Method EnableLogFile() as variant
 	Public Method EnableConsolePrint() as variant
+	Public Method SetState( cState as character ) as variant
+	Public Method SetLogId( cLogId as character ) as variant
+	Public Method SetLogDescription( cLogDescription as character ) as variant
 	Public Method SetMessage( cMessage as character, lConsolePrint as logical ) as variant
 	Public Method CreateLogFile( cFileName as character ) as variant
 	Public Method GetLastMessage() as character
@@ -40,14 +52,29 @@ Cria instância da classe.
 /*/
 Method New() Class GwConsoleLog
 
+	::Init()
+
+Return Self
+
+/*/{Protheus.doc} GwConsoleLog::Init
+Inicializa os atributos principais da classe.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+/*/
+Method Init() Class GwConsoleLog
+
+	::cLog          := ""
+	::cState        := "INFO"
+	::cLastMessage  := ""
+	::cLogFile      := ""
 	::lFwLogMsg     := .F.
 	::lPrefix       := .T.
 	::lCreateLog    := .T.
 	::lConsolePrint := .T.
 
-	::oError := GwError():Create() // Cria uma instância do objeto de erro vazio
-
-Return Self
+Return
 
 /*/{Protheus.doc} GwConsoleLog::Clear() as variant
 Recicla o objeto limpando todos seus atributos.
@@ -57,9 +84,7 @@ Recicla o objeto limpando todos seus atributos.
 @since 3/21/2023
 /*/
 Method Clear() as variant Class GwConsoleLog
-	::cLog := ""
-	::cLastMessage := ""
-	::cLogFile := ""
+	::Init()
 Return
 
 /*/{Protheus.doc} GwConsoleLog::UseFwLogMsgClass( lArg as logical ) as variant
@@ -119,6 +144,39 @@ Method EnableConsolePrint( lArg as logical ) as variant Class GwConsoleLog
 	::lConsolePrint := lArg
 Return
 
+/*/{Protheus.doc} GwConsoleLog::SetState( cState as character ) as variant
+Define o estado que o log representa, por exemplo: SUCESSO, FALHA, INFO, etc...
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+/*/
+Method SetState( cState as character ) as variant Class GwConsoleLog
+	::cState := cState
+Return
+
+/*/{Protheus.doc} GwConsoleLog::SetLogId( cLogId as character ) as variant
+Define um identificador para o registro ao gerar o log
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+/*/
+Method SetLogId( cLogId as character ) as variant Class GwConsoleLog
+	::cLogId := cLogId
+Return
+
+/*/{Protheus.doc} GwConsoleLog::SetLogDescription( cLogDescription as character ) as variant
+Define uma String descritiva auxiliar para composição do log
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/21/2023
+/*/
+Method SetLogDescription( cLogDescription as character ) as variant Class GwConsoleLog
+	::cLogDescription := cLogDescription
+Return
+
 /*/{Protheus.doc} GwConsoleLog::SetMessage( lArg as logical, lConsolePrint as logical ) as variant
 Define a mensagem do log.
 @type method
@@ -126,50 +184,79 @@ Define a mensagem do log.
 @author Gworks-Giovani
 @since 20/09/2022
 /*/
-Method SetMessage( cMessage as character, lConsolePrint as logical ) as variant Class GwConsoleLog
+Method SetMessage( cMessage as character, lConsolePrint as logical, lBreakLine as logical ) as variant Class GwConsoleLog
 
-	Local nStart := Seconds() as numeric
+	Local nStart      := 0  as numeric
+	Local cPrefix     := "" as character
+	Local cState      := "" as character
+	Local cDetails    := "" as character
+	Local cLogMessage := "" as character
 
 	Default lConsolePrint := ::lConsolePrint
+	Default lBreakLine    := .F.
 
-	:: cLastMessage := cMessage
+	::cLastMessage := AllTrim(cMessage)
 
+	// Define o estado da mensagem de log
+	// Ex.: SUCESSO, FALHA, INFO, etc..
+	cState := if( !Empty(::cState), AllTrim(Upper(::cState)), "INFO" )
+
+	// Define os detalhes da mensagem
+	do case
+		case !Empty(::cLogId) .And. !Empty(::cLogDescription)
+			cDetails := ::cLogId +"|"+ ::cLogDescription
+
+		case  Empty(::cLogId) .And. !Empty(::cLogDescription)
+			cDetails := ::cLogDescription
+
+		case !Empty(::cLogId) .And.  Empty(::cLogDescription)
+			cDetails := ::cLogId
+	endcase
+
+	// Define o prefixo da mensagem.
+	// Ex.: "01|010002|FSJB037|23/09/2022|11:48:58|INICIO DO PROCESSAMENTO"
 	if ::lPrefix
-		// Define o prefixo da mensagem.
-		// Ex.: "01|010002|FSJB037|23/09/2022|11:48:58|INICIO DO PROCESSAMENTO"
-		cMessage := ;
-			cEmpAnt + "|" +;
-			cFilAnt + "|" +;
-			FunName() + "|" +;
+		cPrefix := ;
+			cEmpAnt      + "|" +;
+			cFilAnt      + "|" +;
+			FunName()    + "|" +;
 			dToC(Date()) + "|" +;
-			Time() + "|" +;
-			cMessage
+			Time()
 	endif
 
-	if !Empty(cMessage) .And. lConsolePrint
+	if lConsolePrint .And. !Empty(::cLastMessage)
 
 		if ::lFwLogMsg
-			FwLogMsg( ;
-				"INFO",;             // cSeverity
-				,;                   // cTransactionId
-				"CONOUT",;           // cGroup
-				FunName(),;          // cCategory
-				"",;                 // cStep
-				"01",;               // cMessageId
-				cMessage,;           // cMessage
-				0,;                  // nMensure
-				(nStart-Seconds()),; // nElapseTime
-				{};                  // aMessage
+
+			cLogMessage := if( !Empty(cDetails), cDetails +"|", "" ) + ::cLastMessage + if( lBreakLine, CRLF, "" )
+
+			nStart := Seconds()
+
+			FwLogMsg(;
+				cState,;                // cSeverity
+				nil,;                   // cTransactionId
+				cEmpAnt +"|"+ cFilAnt,; // cGroup
+				FunName(),;             // cCategory
+				dToC(Date()),;          // cStep
+				"01",;                  // cMessageId
+				cLogMessage,;           // cMessage
+				0,;                     // nMensure
+				(nStart-Seconds()),;    // nElapseTime
+				{};                     // aMessage
 			)
 
 		else
-			ConOut(cMessage)
+
+			cLogMessage := cPrefix +"|"+ cState +"|"+ if( !Empty(cDetails), cDetails +"|", "" ) + ::cLastMessage + if( lBreakLine, CRLF, "" )
+
+			ConOut(cLogMessage)
+
 		endif
 
 	endif
 
 	if ::lCreateLog
-		::cLog += cMessage + CRLF
+		::cLog += cLogMessage + CRLF
 	endif
 
 Return

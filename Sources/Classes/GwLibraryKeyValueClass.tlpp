@@ -43,7 +43,7 @@ Method Length() as numeric Class GwKeyValue
 
     Local nResult := 0
 
-    nResult := Len(aKeyValue)
+    nResult := Len(::aKeyValue)
 
 Return nResult
 

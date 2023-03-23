@@ -15,6 +15,8 @@ Class GwError From ErrorClass
     Public Data cSuggestion  as character default ""
     Public Data cTitle       as character default ""
     Public Data cAutoGRLog   as character default ""
+    Public Data cFunName     as character default ""
+    Public Data cMethod      as character default ""
     Public Data lError       as logical   default .F.
 
     // Métodos construtores
@@ -33,7 +35,7 @@ Class GwError From ErrorClass
     Public Method SetAutoGRLog( cAutoGRLog as character ) // define a mensagem para exibição via função MostraErro()
     Public Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) as variant // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
     Public Method ShowAutoGRLog() as variant // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
-    Public Method ThrowException( cFunName as character, cMethod as character ) as variant // Lança exceção de erro
+    Public Method ThrowException() as variant // Lança exceção de erro
 
 EndClass
 
@@ -314,7 +316,7 @@ Method ShowAutoGRLog() as variant Class GwError
     MostraErro()
 Return
 
-/*/{Protheus.doc} GwError::ThrowException( cFunName as character, cMethod as character ) as variant
+/*/{Protheus.doc} GwError::ThrowException() as variant
 Lança exceção de erro.
 @type method
 @version 12.1.33
@@ -322,14 +324,26 @@ Lança exceção de erro.
 @since 3/21/2023
 @obs O estado da instância deve estar em "com erro".
 /*/
-Method ThrowException( cFunName as character, cMethod as character ) as variant Class GwError
+Method ThrowException() as variant Class GwError
 
     Local cPrefix := "" as character
 
-    Default cFunName := FunName()
-    Default cMethod := ""
+    if !Empty(::cFunName)
+        ::cFunName := FunName()
+    endif
 
-    cPrefix := if( !Empty(cMethod), cFunName + ":" + cMethod, cFunName ) + ": "
+    do case
+
+        case !Empty(::cFunName) .And. !Empty(::cMethod)
+             cPrefix := ::cFunName +":"+ ::cMethod + " - "
+
+        case  Empty(::cFunName) .And. !Empty(::cMethod)
+             cPrefix := ::cMethod + " - "
+
+        case !Empty(::cFunName) .And.  Empty(::cMethod)
+             cPrefix := ::cFunName + " - "
+
+    endcase
 
     if ::lError
         UserException( cPrefix + ::cError )
