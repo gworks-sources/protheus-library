@@ -70,6 +70,7 @@ Class GwDataAccess
 
     // Métodos públicos da classe para fins de relacionamentos
     Public Method SetRelation( oAttr as object ) as variant
+    Public Method RefreshRelation() as logical
     Public Method SelectRelation( cAliasJoin as character, cIndexJoin as character ) as logical
     Public Method RelationSearch( cFieldName as character, xContent as variant, cRetJoinId as character ) as logical
     Public Method RelationGetSearchResult() as object
@@ -323,6 +324,9 @@ Method Seek( cKey as character ) as logical Class GwDataAccess
     if lResult
         ::nRecnoId := (cAlias)->(Recno())
         ::lFound   := .T.
+        if !::RefreshRelation() // atualiza relacionamentos quando houver
+            lResult := .F. // retorna .F. se não posicionar adequadamente no relacionamento
+        endif
     endif
 
 Return lResult
@@ -608,6 +612,29 @@ Method SetRelation( oAttr as object ) as variant Class GwDataAccess
     ::oRelation := oRelation
 
     aAdd(::aRelation, ::oRelation)
+
+Return lResult
+
+/*/{Protheus.doc} GwDataAccess::RefreshRelation() as logical
+Reposiciona o relacionamento conforme alias principal.
+@type method
+@version 12.1.33
+@author Gworks
+@since 3/23/2023
+/*/
+Method RefreshRelation() as logical Class GwDataAccess
+
+    Local lResult := .F. as logical
+
+    if !Empty(::oRelation)
+
+        lResult := ::oRelation:Join()
+
+    else
+
+        lResult := .T. // sempre retorna .T. quando não houver relacionamento
+
+    endif
 
 Return lResult
 
