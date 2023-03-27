@@ -130,7 +130,7 @@ Method InitDialog() Class GwGetFile
         Return .F. // não suporta abertura de dialog com operação cega
     endif
 
-    ::cInitDirectory     := GetTempPath(.T., .F.) // diretório "temp" do sistema operacional
+    ::cInitDirectory     := GetTempPath(.T.)      // diretório "temp" do sistema operacional
     ::cDialogTitle       := "Selecionar Arquivo"  // título do dialog
     ::cDialogFileMask    := "Todos arquivos|*.*"  // considera todos arquivos
     ::cDialogOperation   := "OPEN"                // modo de operação padrão, abertura de arquivo
