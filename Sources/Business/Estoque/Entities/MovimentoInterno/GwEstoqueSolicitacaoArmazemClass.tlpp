@@ -12,6 +12,7 @@ Class GwSolicitacaoArmazem From GwDataAccess
     Public Data oError as object
 
     Public Method New()
+    Public Method GetErrorObject()
     Public Method MATA105Exec( aCabec as array, aItens as array, nOpc as numeric ) as logical
 
 EndClass
@@ -32,6 +33,17 @@ Method New() Class GwSolicitacaoArmazem
     _Super:New("SCP")
 
 Return Self
+
+/*/{Protheus.doc} GwSolicitacaoArmazem::GetErrorObject
+Retorna o objeto de erro referente a instância da classe.
+@type method
+@version 12.1.33
+@author Giovani-Gworks
+@since 3/27/2023
+@return object, Objeto de erro pertencente a classe GwError.
+/*/
+Method GetErrorObject()  Class GwSolicitacaoArmazem
+Return ::oError
 
 /*/{Protheus.doc} GwSolicitacaoArmazem::MATA105Exec( aCabec as array, aItens as array, nOpc as numeric  ) as logical
 Executa a rotina MATA105 por meio de ExecAuto().
