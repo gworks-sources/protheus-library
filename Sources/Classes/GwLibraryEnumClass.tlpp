@@ -1,6 +1,7 @@
 #include "TOTVS.ch"
-#include "TLPP-Core.th"
-#include "TLPP-Object.th"
+#include "MsObject.ch"
+// #include "TLPP-Core.th"
+// #include "TLPP-Object.th"
 
 namespace Gworks.Library.Classes
 
