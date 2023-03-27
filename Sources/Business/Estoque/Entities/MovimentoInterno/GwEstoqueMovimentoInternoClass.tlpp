@@ -47,7 +47,7 @@ Executa a rotina MATA105 por meio de ExecAuto().
     5-Exclusão.
 @return logical, .T. sucesso e .F. falha.
 /*/
-Method MATA105Exec( aCabec as array, aItens as array, nOpc as numeric  ) as logical Class GwSolicitacaoArmazem
+Method MATA105Exec( aCabec as array, aItens as array, nOpc as numeric ) as logical Class GwSolicitacaoArmazem
 
     Local lResult       := .F. as logical
 
