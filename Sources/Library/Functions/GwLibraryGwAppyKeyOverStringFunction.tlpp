@@ -2,7 +2,7 @@
 
 namespace Gworks.Library.Functions
 
-/*/{Protheus.doc} GwApplyKeyValueOnString
+/*/{Protheus.doc} GwAppyKeyOverString
 Substitui em uma determinada string todos os patrâmetros definidos em um objeto do tipo KeyValue.
 @type function
 @version 12.1.33
@@ -13,7 +13,7 @@ Substitui em uma determinada string todos os patrâmetros definidos em um objeto 
 @param cTokem, character, Token para localização e substituição da string.
 @return character, String processada.
 /*/
-User Function GwApplyKeyValueOnString( cString as character, oValues as object, cToken as character )
+User Function GwAppyKeyOverString( cString as character, oValues as object, cToken as character )
 
     Local cAttrName  := ""  as character
     Local xAttrValue := nil as variant
