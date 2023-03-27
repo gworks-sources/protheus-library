@@ -1,0 +1,85 @@
+#include "TOTVS.ch"
+#include "MsObject.ch"
+#include "TLPP-Core.th"
+#include "TLPP-Object.th"
+
+using namespace Gworks.Library.Classes
+
+namespace Gworks.Business.Estoque.Entities
+
+Class GwSolicitacaoArmazem From GwDataAccess
+
+    Public Data oError as object
+
+    Public Method New()
+    Public Method MATA105Exec( aCabec as array, aItens as array, nOpc as numeric ) as logical
+
+EndClass
+
+/*/{Protheus.doc} GwSolicitacaoArmazem::New
+Construtor da classe.
+@type method
+@version 12.1.33
+@author Giovani-Gworks
+@since 3/27/2023
+@return object, Instância do objeto.
+/*/
+Method New() Class GwSolicitacaoArmazem
+
+    ::oError := GwError():New()
+    ::oError:cFunName := "GwSolicitacaoArmazem"
+
+    _Super:New("SCP")
+
+Return Self
+
+/*/{Protheus.doc} GwSolicitacaoArmazem::MATA105Exec( aCabec as array, aItens as array, nOpc as numeric  ) as logical
+Executa a rotina MATA105 por meio de ExecAuto().
+@type method
+@version 12.1.33
+@author Giovani-Gworks
+@since 3/27/2023
+@param aCabec, array, Dados do cabeçalho.
+@param aItens, array, Dados dos itens.
+@param nOpc, numeric, opção de execução da rotina, podendo ser:
+    3-Inclusão;
+    4-Alteração;
+    5-Exclusão.
+@return logical, .T. sucesso e .F. falha.
+/*/
+Method MATA105Exec( aCabec as array, aItens as array, nOpc as numeric  ) as logical Class GwSolicitacaoArmazem
+
+    Local lResult       := .F. as logical
+
+    Private lMsErroAuto := .F. as logical
+
+    Default aCabec      := {}
+    Default aItens      := {}
+    Default nOpc        := 0
+
+    ::oError:cMethod := "MATA105Exec"
+
+    if Empty(aCabec) .Or. Empty(aCabec) .Or. Empty(nOpc)
+        ::oError:cError := "Parâmetros não informados ou inválidos!"
+        ::oError:ThrowException()
+    endif
+
+    MsExecAuto( { | x, y, z | Mata105( x, y , z ) }, aCab, aItens, nOpc )
+
+    if lMsErroAuto
+
+        RollBackSx8()
+
+        DisarmTransaction()
+
+        ::oError:SetAutoGRLogFromExecAuto("MATA105")
+
+    else
+
+        ConfirmSX8()
+
+        lResult := .T.
+
+    endif
+
+Return lResult
