@@ -33,7 +33,8 @@ Class GwError From ErrorClass
     Public Method HasError() as logical // indica que a instância da classe GwError foi definida como erro
     Public Method ShowError( cStyle as character, cTitle as character, lShowAutoGRLog as logical, lDefineWithError as logical, lUpdateErrorClass as logical ) as variant // exibe a mensagem de erro entre: "INFO", "STOP", "ALERT", "HELP"
     Public Method SetAutoGRLog( cAutoGRLog as character ) // define a mensagem para exibição via função MostraErro()
-    Public Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) as variant // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
+    Public Method SetAutoGRLogFromModel( oModel as object ) as variant // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
+    Public Method SetAutoGRLogFromExecAuto( cExecAutoName as character ) as variant
     Public Method ShowAutoGRLog() as variant // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
     Public Method ThrowException( cException as character ) as variant // Lança exceção de erro
 
@@ -277,31 +278,89 @@ Method SetAutoGRLog( cAutoGRLog as character ) Class GwError
     Self:cAutoGRLog := cAutoGRLog
 Return
 
-/*/{Protheus.doc} GwError::SetAutoGRLogFromArray
+/*/{Protheus.doc} GwError::SetAutoGRLogFromModel
 Possui o mesmo propósito que o método SetAutoGRLog(), porém, obtem os dados
 a partir de um array no formato de execuções oriundas do Framework MVC.
 @type method
 @version 12.1.33
 @author Gworks-Giovani
 @since 3/21/2023
-@param aError, array, Dados do erro, aviso ou log.
-@param cClassOrigin, character,
+@param oModel, object, Modelo de dados correspondente.
 /*/
-Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) as variant Class GwError
-    Default cClassOrigin := "FwFormModel"
-    do case
-        case Upper(cClassOrigin) == Upper("FwFormModel")
-            Self:cAutoGRLog := "Detalhes:" + CRLF
-            Self:cAutoGRLog += "Id do formulário de origem: " + '[ ' + cValToChar(aError[01]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Id do campo de origem: "      + '[ ' + cValToChar(aError[02]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Id do formulário de erro: "   + '[ ' + cValToChar(aError[03]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Id do campo de erro: "        + '[ ' + cValToChar(aError[04]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Id do erro: "                 + '[ ' + cValToChar(aError[05]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Mensagem do erro: "           + '[ ' + cValToChar(aError[06]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Mensagem da solução: "        + '[ ' + cValToChar(aError[07]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Valor atribuído: "            + '[ ' + cValToChar(aError[08]) + ' ]' + CRLF
-            Self:cAutoGRLog += "Valor anterior: "             + '[ ' + cValToChar(aError[09]) + ' ]' + CRLF
-    endcase
+Method SetAutoGRLogFromModel( oModel as object, cModelName as character ) as variant Class GwError
+
+    Local aError       := {} as array
+    Local cError       := "" as character
+    Local cResult      := "" as character
+
+    Default oModel     := nil
+    Default cModelName := ""
+
+    if !empty(oModel)
+        Return ""
+    endif
+
+    aError := oModel:GetErrorMessage()
+
+    if len(aErro) > 0
+
+            cError := "Id do formulário de origem: " + '[ ' + cValToChar(aError[01]) + ' ]' + CRLF
+            cError += "Id do campo de origem: "      + '[ ' + cValToChar(aError[02]) + ' ]' + CRLF
+            cError += "Id do formulário de erro: "   + '[ ' + cValToChar(aError[03]) + ' ]' + CRLF
+            cError += "Id do campo de erro: "        + '[ ' + cValToChar(aError[04]) + ' ]' + CRLF
+            cError += "Id do erro: "                 + '[ ' + cValToChar(aError[05]) + ' ]' + CRLF
+            cError += "Mensagem do erro: "           + '[ ' + cValToChar(aError[06]) + ' ]' + CRLF
+            cError += "Mensagem da solução: "        + '[ ' + cValToChar(aError[07]) + ' ]' + CRLF
+            cError += "Valor atribuído: "            + '[ ' + cValToChar(aError[08]) + ' ]' + CRLF
+            cError += "Valor anterior: "             + '[ ' + cValToChar(aError[09]) + ' ]' + CRLF
+    endif
+
+    if !empty(cError)
+
+        cResult := "Model Error " + AllTrim(Upper(cModelName)) + ": " + CRLF + cError
+
+        ::oError:SetAutoGRLog(cResult)
+        ::oError:lError := .T.
+
+    endif
+
+Return
+
+/*/{Protheus.doc} GwError::SetAutoGRLogFromExecAuto( cExecAutoName as character ) as character
+Possui o mesmo propósito que o método SetAutoGRLog(), porém, obtem os dados
+resultantes da execução de um ExecAuto().
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/27/2023
+@param cExecAutoName, character, Nome da rotina referente ao execauto.
+/*/
+Method SetAutoGRLogFromExecAuto( cExecAutoName as character ) as variant Class GwError
+
+    Local nI              := 0  as numeric
+    Local aError          := {} as array
+    Local cError          := "" as character
+    Local cResult         := ""
+
+    Default cExecAutoName := ""
+
+    aErro := SetAutoGRLogFromExecAuto()
+
+    for nI:=1 to len(aError)
+
+        cError += aErro[nX] + CRLF
+
+    next nX
+
+    if !empty(cError)
+
+        cResult := " MSExecAuto Error " + AllTrim(Upper(cExecAutoName)) + ": " + CRLF + cError
+
+        ::oError:SetAutoGRLog(cResult)
+        ::oError:lError := .T.
+
+    endif
+
 Return
 
 /*/{Protheus.doc} GwError::ShowAutoGRLog
