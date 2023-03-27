@@ -156,7 +156,7 @@ Method SetState( cState as character ) as variant Class GwConsoleLog
 Return
 
 /*/{Protheus.doc} GwConsoleLog::SetLogId( cLogId as character ) as variant
-Define um identificador para o registro ao gerar o log
+Define um identificador para o registro ao gerar o log.
 @type method
 @version 12.1.33
 @author Gworks-Giovani
@@ -186,11 +186,12 @@ Define a mensagem do log.
 /*/
 Method SetMessage( cMessage as character, lConsolePrint as logical, lBreakLine as logical ) as variant Class GwConsoleLog
 
-	Local nStart      := 0  as numeric
-	Local cPrefix     := "" as character
-	Local cState      := "" as character
-	Local cDetails    := "" as character
-	Local cLogMessage := "" as character
+	Local nStart        := 0  as numeric
+	Local cPrefix       := "" as character
+	Local cState        := "" as character
+	Local cDetails      := "" as character
+	Local cLogMessage   := "" as character
+	Local cFwLogMessage := "" as character
 
 	Default lConsolePrint := ::lConsolePrint
 	Default lBreakLine    := .F.
@@ -198,7 +199,7 @@ Method SetMessage( cMessage as character, lConsolePrint as logical, lBreakLine a
 	::cLastMessage := AllTrim(cMessage)
 
 	// Define o estado da mensagem de log
-	// Ex.: SUCESSO, FALHA, INFO, etc..
+	// Ex.: SUCCESS, FAULT, INFO, etc..
 	cState := if( !Empty(::cState), AllTrim(Upper(::cState)), "INFO" )
 
 	// Define os detalhes da mensagem
@@ -214,7 +215,7 @@ Method SetMessage( cMessage as character, lConsolePrint as logical, lBreakLine a
 	endcase
 
 	// Define o prefixo da mensagem.
-	// Ex.: "01|010002|FSJB037|23/09/2022|11:48:58|INICIO DO PROCESSAMENTO"
+	// Ex.: "01|010002|FSJB037|23/09/2022|11:48:58|16:07:52
 	if ::lPrefix
 		cPrefix := ;
 			cEmpAnt      + "|" +;
@@ -224,11 +225,13 @@ Method SetMessage( cMessage as character, lConsolePrint as logical, lBreakLine a
 			Time()
 	endif
 
+	cLogMessage := cPrefix +"|"+ cState +"|"+ if( !Empty(cDetails), cDetails +"|", "" ) + ::cLastMessage + if( lBreakLine, CRLF, "" )
+
 	if lConsolePrint .And. !Empty(::cLastMessage)
 
 		if ::lFwLogMsg
 
-			cLogMessage := if( !Empty(cDetails), cDetails +"|", "" ) + ::cLastMessage + if( lBreakLine, CRLF, "" )
+			cFwLogMessage := if( !Empty(cDetails), cDetails +"|", "" ) + ::cLastMessage + if( lBreakLine, CRLF, "" )
 
 			nStart := Seconds()
 
@@ -239,15 +242,13 @@ Method SetMessage( cMessage as character, lConsolePrint as logical, lBreakLine a
 				FunName(),;             // cCategory
 				dToC(Date()),;          // cStep
 				"01",;                  // cMessageId
-				cLogMessage,;           // cMessage
+				cFwLogMessage,;         // cMessage
 				0,;                     // nMensure
 				(nStart-Seconds()),;    // nElapseTime
 				{};                     // aMessage
 			)
 
 		else
-
-			cLogMessage := cPrefix +"|"+ cState +"|"+ if( !Empty(cDetails), cDetails +"|", "" ) + ::cLastMessage + if( lBreakLine, CRLF, "" )
 
 			ConOut(cLogMessage)
 
