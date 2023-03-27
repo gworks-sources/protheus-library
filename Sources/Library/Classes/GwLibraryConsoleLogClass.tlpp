@@ -125,7 +125,7 @@ Method EnableLogFile( lArg as logical ) as variant Class GwConsoleLog
 	lGerLog := SuperGetMV("GW_GERLOG",.F.,.T.) // parâmetro para ligar/desligar a criação de log em disco
 
 	if !lGerLog
-		ConOut("GwConsoleLog:CreateLogFile - Criação do arquivo de log desativada por meio do parâmetro GW_GERLOG!")
+		ConOut("GwConsoleLog:EnableLogFile - Criação do arquivo de log desativada por meio do parâmetro GW_GERLOG!")
 		Return
 	endif
 
