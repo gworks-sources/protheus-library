@@ -243,60 +243,46 @@ Method OpenDialog() Class GwGetFile
         UserException("GwGetFile:New - Tipo de execução não suportada ou não reconhecida!")
     endif
 
-    xResult := tFileDialog(;
-        ::cDialogFileMask,;
-        ::cDialogTitle,;
-        nil,;
-        cInitDirectory,;
-        ::cDialogOperation=="SAVE",;
-        ::xDialogOpeningMode ;
-    )
+    while empty(xResult)
 
-    do case
-        case ::xDialogOpeningMode == GETF_MULTISELECT  ; ::aSelectedFiles := xResult
-        case ::xDialogOpeningMode == GETF_RETDIRECTORY ; ::cSelectedDiretory := xResult
-        otherwise
-            ::cSelectedFile := xResult
-    endcase
+        xResult := tFileDialog(;
+            ::cDialogFileMask,;
+            ::cDialogTitle,;
+            nil,;
+            ::cInitDirectory,;
+            (::cDialogOperation=="SAVE"),;
+            ::xDialogOpeningMode ;
+        )
 
-Return
+        // TODO: criar compatibilidade com cGetFile
+        //xResult := cGetFile( ;
+        //    ::cDialogFileMask,; // cMascara
+        //    ::cDialogTitle,; // cTitulo
+        //    0,; // nMascPadrao
+        //    ::cInitDirectory,; // cDirInicial
+        //    (::cDialogOperation=="SAVE"),; // lSave
+        //    nOR(GETF_LOCALHARD, GETF_NETWORKDRIVE),; // nOpcoes
+        //    .F.,; // lArvore
+        //    .T. ) // lKeepCase
 
-while empty(scSelectedFile)
-
-        tFileDialog( cDialogFileMask,;
-                    'Selecionar Arquivo(s)',;
-                    nil,;
-                    tmp, .F., GETF_MULTISELECT )
-
-        scSelectedFile := cGetFile( cDialogFileMask,; // cMascara
-                                    "Selecionar arquivo",; // cTitulo
-                                    0,; // nMascpadrao
-                                    scMainPath,; // cDirInicial
-                                    .T.,; // lSave
-                                    nOR(GETF_LOCALHARD, GETF_NETWORKDRIVE),; // nOpcoes
-                                    .F.,; // lArvore
-                                    .T. ) // lKeepCase
-
-        // scSelectedFile := cGetFile( cDialogFileMask,; // cMascara
-        //                             "Selecionar arquivo",; // cTitulo
-        //                             0,; // nMascpadrao
-        //                             scMainPath,; // cDirInicial
-        //                             .T.,; // lSave
-        //                             nOR(GETF_LOCALHARD, GETF_NETWORKDRIVE),; // nOpcoes
-        //                             .F.,; // lArvore
-        //                             .T. ) // lKeepCase
-
-        if empty(scSelectedFile)
-            if MsgYesNo("Deseja cancelar a seleção do arquivo?","Cancelar!?")
-                scSelectedFile := ""
+        if empty(xResult)
+            if MsgYesNo("Deseja cancelar a seleção?","Cancelar!?")
+                xResult := ""
                 exit
             endif
         endif
 
-        if !Empty(scSelectedFile) .And. ".xlsx" $ scSelectedFile .And. File(scSelectedFile) // verifica se o arquivo selecionado é válido
-            lSelected := .T.
-        else
-            scSelectedFile := "" // tratativa para arquivo inválido
-        endif
-
     enddo
+
+    if !empty(xResult)
+
+        do case
+            case ::xDialogOpeningMode == GETF_MULTISELECT  ; ::aSelectedFiles := xResult // vários arquivos
+            case ::xDialogOpeningMode == GETF_RETDIRECTORY ; ::cSelectedDiretory := xResult // diretório
+            otherwise
+                ::cSelectedFile := xResult // único arquivo
+        endcase
+
+    endif
+
+Return
