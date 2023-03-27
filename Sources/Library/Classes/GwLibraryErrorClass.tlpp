@@ -35,7 +35,7 @@ Class GwError From ErrorClass
     Public Method SetAutoGRLog( cAutoGRLog as character ) // define a mensagem para exibição via função MostraErro()
     Public Method SetAutoGRLogFromArray( aError as array, cClassOrigin as character ) as variant // define a mensagem para exibição via função MostraErro() a partir de um array (somente para funções mvc)
     Public Method ShowAutoGRLog() as variant // mostra a janela de erro da função MostraErro() conforme a mensagem definida para o
-    Public Method ThrowException() as variant // Lança exceção de erro
+    Public Method ThrowException( cException as character ) as variant // Lança exceção de erro
 
 EndClass
 
@@ -324,29 +324,37 @@ Lança exceção de erro.
 @since 3/21/2023
 @obs O estado da instância deve estar em "com erro".
 /*/
-Method ThrowException() as variant Class GwError
+Method ThrowException( cException as character ) as variant Class GwError
 
     Local cPrefix := "" as character
 
-    if !Empty(::cFunName)
-        ::cFunName := FunName()
-    endif
+    Default cException := ""
 
-    do case
+    if Empty(cException)
 
-        case !Empty(::cFunName) .And. !Empty(::cMethod)
-             cPrefix := ::cFunName +":"+ ::cMethod + " - "
+        if !Empty(::cFunName)
+            ::cFunName := FunName()
+        endif
 
-        case  Empty(::cFunName) .And. !Empty(::cMethod)
-             cPrefix := ::cMethod + " - "
+        do case
 
-        case !Empty(::cFunName) .And.  Empty(::cMethod)
-             cPrefix := ::cFunName + " - "
+            case !Empty(::cFunName) .And. !Empty(::cMethod)
+                cPrefix := ::cFunName +":"+ ::cMethod + " - "
 
-    endcase
+            case  Empty(::cFunName) .And. !Empty(::cMethod)
+                cPrefix := ::cMethod + " - "
 
-    if ::lError
+            case !Empty(::cFunName) .And.  Empty(::cMethod)
+                cPrefix := ::cFunName + " - "
+
+        endcase
+
         UserException( cPrefix + ::cError )
+
+    else
+
+        UserException(cException)
+
     endif
 
 Return
