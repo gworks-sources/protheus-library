@@ -1,0 +1,73 @@
+#include "TOTVS.ch"
+
+namespace Gworks.Library.Functions
+
+/*/{Protheus.doc} TFSImperiumWMS::getXmlNodeLength
+Retorna o tamanho de um array em um determinado nó passado por parâmetro.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/15/2023
+@param oObj, object, Objeto XML deserializado.
+@param cNode, character, Nome do nó.
+@return logical, Quantidade de elementos dentro do nó.
+/*/
+User Function GwGetXmlNodeLength( oObj as object, cNode as character )
+
+	Local nLen as numeric
+	Local cMacro as character
+	Local oRet as object
+
+	Private oXml as object
+
+	oXml := oObj
+
+	cMacro := "oXml:"+cNode
+
+	do case
+
+		case Type(cMacro) == "O"
+			nLen := 1
+
+		case Type(cMacro) == "A"
+			nLen := Len(&cMacro)
+
+	endcase
+
+Return nLen
+
+/*/{Protheus.doc} TFSImperiumWMS::kz
+Retorna nós de objetos XML deserializados normatizando o retorno entre objeto e array de objetos.
+@type method
+@version 12.1.33
+@author Gworks-Giovani
+@since 3/15/2023
+@param cNode, character, Nó do objeto XML que deve ser avaliado.
+@param nPos, numeric, Posição do objeto para nós que podem ser array.
+@return object, Conteúdo normatizado do objeto.
+@obs A variável interna oXml é deve ter escopo Private para correto funcionamento com a função Type().
+/*/
+User Function GwGetXmlNodeObject( oObj as object, cNode as character, nPos as numeric )
+
+	Local cMacro as character
+	Local oRet as object
+
+	Default nPos := 1
+
+	Private oXml as object
+
+	oXml := oObj
+
+	cMacro := "oXml:"+cNode
+
+	do case
+
+		case Type(cMacro) == "O"
+			oRet := &(cMacro)
+
+		case Type(cMacro) == "A"
+			oRet := &(cMacro+"[nPos]")
+
+	endcase
+
+Return oRet
