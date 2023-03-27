@@ -1,0 +1,302 @@
+#include "TOTVS.ch"
+#include "MsObject.ch"
+
+namespace Gworks.Library.Functions
+
+Class GwGetFile
+
+    // Atributos referente ao Dialog de seleção dee arquivos
+    Public Data cDialogTitle             as character default ""
+    Public Data cDialogFileMask          as character default ""
+    Public Data cDialogOperation         as character default ""
+    Public Data xDialogOpeningMode       as variant   default 0
+
+    // Atributos referente ao arquivo/pasta selecionados
+    Public Data cInitDirectory           as character default ""
+    Public Data cSelectedFile            as character default ""
+    Public Data aSelectedFiles           as array     default {}
+    Public Data cSelectedDiretory        as character default ""
+    Public Data aFilesOnSelectedDiretory as character default ""
+
+    Public Method New() Constructor
+
+    // Métodos públicos da classe
+    Public Method SetInitDirectory( cDirectory as character ) as logical
+
+    // Métodos públicos para seleção de arquivo com dialog
+    Public Method InitDialog()
+    Public Method SetDialogMask( cDialogFileMask as character )
+    Public Method SetDialodOpening()
+    Public Method SetDialodSave()
+    Public Method SetDialogMultiFile( lOption as logical )
+    Public Method SetDialogDirectory( lOption as logical )
+    Public Method OpenDialog()
+
+    Public Method OpenDirectory() // TODO: implementar...
+    Public Method MoveTo( cDestinationFolder as character ) // TODO: implementar...
+    Public Method CopyTo( cDestinationFolder as character ) // TODO: implementar...
+    Public Method DeleteFile() // TODO: implementar...
+    Public Method EraseDirectory() // TODO: implementar...
+
+
+    Protected Method CopyFileTo( cDestinationFolder as character ) // TODO: implementar...
+
+EndClass
+
+/*/{Protheus.doc} GwGetFile::New
+Método construtor de classe GwGetFile.
+@type method
+@version 123.1.33
+@author Gworks
+@since 3/26/2023
+@return object, Instância da classe.
+/*/
+Method New( ) Class GwGetFile
+
+    ::cInitDirectory := ""
+    ::aSelectedFiles := {}
+
+Return Self
+
+/*/{Protheus.doc} GwGetFile::SetInitDirectory
+Define o diretório de inicialização que deve ser considerado para todas as operações
+de manipulação de arquivo/diretório.
+@type method
+@version 123.1.33
+@author Gworks
+@since 3/26/2023
+@param cDirectory, character, Diretório desejado.
+@param lCreateDir, logical, Se Verdadeiro tenta criar o diretório informado em cDirectory. Padrão: .T.
+@return logical, .T. sucesso e .F. falha.
+@obs Retorna .F. apenas se o diretório não existir e lCreateDir definir que não se deve criar o arquivo.
+/*/
+Method SetInitDirectory( cDirectory as character, lCreateDir as logical ) as logical Class GwGetFile
+
+    Local lExistDir := .F. as logical
+    Local lResult   := .F. as logical
+
+    Default cDirectory := ""
+    Default lCreateDir := .T.
+
+    cDirectory := AllTrim(cDirectory)
+
+    if Empty(cDirectory)
+        UserException("GwGetFile:SetInitDirectory - Parâmetro cDirectory não informado ou inválido!")
+    endif
+
+    lExistDir :=  ExistDir(cDirectory, /*lChangeCase*/.F.)
+
+    do case
+
+        case lExistDir
+
+            lResult := .T. // diretório existente
+
+        case lResult
+
+        case !lExistDir .And. !lCreateDir
+
+            lResult := .F. // diretório não existente e parametrizado para não ser criado
+
+        case !lExistDir .And. lCreateDir
+
+            if !MakeDir(cDirectory, nil,/*lChangeCase*/.F.) != 0
+                UserException("GwGetFile:SetInitDirectory - Falha ao criar o diretório: "+'"'+cDirectory+'".')
+            endif
+
+            lResult := .T. // diretório não existente, porém, criado adequadamente
+
+    endcase
+
+    ::cInitDirectory := ""
+    if lResult
+        ::cInitDirectory := cDirectory
+    endif
+
+Return lResult
+
+/*/{Protheus.doc} GwGetFile::InitDialog
+Inicializa a classe para seleção de arquivos por meio de uma janela gráfica da biblioteca do sistema operacional.
+@type method
+@version 123.1.33
+@author Gworks
+@since 3/26/2023
+@return logical, .T. sucesso e .F. falha.
+@obs Retorna .F. somente se identificada operação cega por meio da função isBlind().
+/*/
+Method InitDialog() Class GwGetFile
+
+    if isBlind()
+        Return .F. // não suporta abertura de dialog com operação cega
+    endif
+
+    ::cInitDirectory     := GetTempPath(.T., .F.) // diretório "temp" do sistema operacional
+    ::cDialogTitle       := "Selecionar Arquivo"  // título do dialog
+    ::cDialogFileMask    := "Todos arquivos|*.*"  // considera todos arquivos
+    ::cDialogOperation   := "OPEN"                // modo de operação padrão, abertura de arquivo
+    ::xDialogOpeningMode := nil                   // apenas um arquivo
+
+Return .T.
+
+
+/*/{Protheus.doc} GwGetFile::SetDialogMask
+Define o tipo de arquivo que deverá ser considerado na janela de seleção.
+@type method
+@version 12.1.33
+@author Gworks
+@since 3/26/2023
+@param cDialogFileMask, character, Tipos de arquivo. Ex.: "Arquivos de texto|*.txt|Bitmaps|*.bmp"
+/*/
+Method SetDialogMask( cDialogFileMask as character ) Class GwGetFile
+    ::cDialogFileMask := AllTrim(lower(cDialogFileMask))
+Return
+
+/*/{Protheus.doc} GwGetFile::SetDialodOpening
+Define que será um dialog para selecionar arquivos/diretórios.
+@type method
+@version 12.1.33
+@author Gworks
+@since 3/26/2023
+/*/
+Method SetDialodOpening()  Class GwGetFile
+    ::cDialogOperation := "OPEN"
+Return
+
+/*/{Protheus.doc} GwGetFile::SetDialodSave
+Define que será um dialog para salvar arquivos.
+@type method
+@author Gworks
+@since 3/26/2023
+/*/
+Method SetDialodSave()  Class GwGetFile
+    ::cDialogOperation := "SAVE"
+Return
+
+/*/{Protheus.doc} GwGetFile::SetDialogMultiFile
+Permite selecionar vários arquivos na janela de seleção aberta pelo método ::OpenDialog.
+@type method
+@version 12.1.33
+@author Gworks
+@since 3/26/2023
+@param lOption, logical, .T. habilita e .F. desabilita o referido comportamento.
+@obs Se lOption for .F., considerará o comportamento padrão que é permitir selecionar um único arquivo.
+/*/
+Method SetDialogMultiFile( lOption as logical ) Class GwGetFile
+
+    if ::cDialogOperation != "OPEN"
+        UserException("GwGetFile:SetDialogMultiFile - DialogOperation incompatível com a operação realizada!")
+    endif
+
+    ::xDialogOpeningMode := nil
+    if lOption
+        ::xDialogOpeningMode := GETF_MULTISELECT
+    endif
+
+Return
+
+/*/{Protheus.doc} GwGetFile::SetDialogDirectory
+Permite selecionar um diretório na janela de seleção aberta pelo método ::OpenDialog.
+@type method
+@version 12.1.33
+@author Gworks
+@since 3/26/2023
+@param lOption, logical, .T. habilita e .F. desabilita o referido comportamento.
+@obs Se lOption for .F., considerará o comportamento padrão que é permitir selecionar um único arquivo.
+/*/
+Method SetDialogDirectory( lOption as logical ) Class GwGetFile
+
+    if ::cDialogOperation != "OPEN"
+        UserException("GwGetFile:SetDialogMultiFile - DialogOperation incompatível com a operação realizada!")
+    endif
+
+    ::xDialogOpeningMode := nil
+    if lOption
+        ::xDialogOpeningMode := GETF_RETDIRECTORY
+    endif
+
+Return
+
+/*/{Protheus.doc} GwGetFile::OpenDialog
+Abre o dialog (janela) para seleção ou salvamento de arquivos/diretórios.
+@type method
+@version 12.1.33
+@author Gworks
+@since 3/26/2023
+/*/
+Method OpenDialog() Class GwGetFile
+
+    Local nRemoteType         := 0   as numeric
+    Local lSupportedOperation := .F. as logical
+    Local xResult             := ""  as variant // o resultado pode ser character ou array
+
+    nRemoteType := GetRemoteType()
+
+    do case
+        case nRemoteType == -1; lSupportedOperation := .F. // Job, Web ou Working Thread (sem interface)
+        case nRemoteType ==  1; lSupportedOperation := .T. // Windows
+        case nRemoteType ==  2; lSupportedOperation := .T. // Linux
+        otherwise
+            lSupportedOperation := .F.
+    endcase
+
+    if !lSupportedOperation
+        UserException("GwGetFile:New - Tipo de execução não suportada ou não reconhecida!")
+    endif
+
+    xResult := tFileDialog(;
+        ::cDialogFileMask,;
+        ::cDialogTitle,;
+        nil,;
+        cInitDirectory,;
+        ::cDialogOperation=="SAVE",;
+        ::xDialogOpeningMode ;
+    )
+
+    do case
+        case ::xDialogOpeningMode == GETF_MULTISELECT  ; ::aSelectedFiles := xResult
+        case ::xDialogOpeningMode == GETF_RETDIRECTORY ; ::cSelectedDiretory := xResult
+        otherwise
+            ::cSelectedFile := xResult
+    endcase
+
+Return
+
+while empty(scSelectedFile)
+
+        tFileDialog( cDialogFileMask,;
+                    'Selecionar Arquivo(s)',;
+                    nil,;
+                    tmp, .F., GETF_MULTISELECT )
+
+        scSelectedFile := cGetFile( cDialogFileMask,; // cMascara
+                                    "Selecionar arquivo",; // cTitulo
+                                    0,; // nMascpadrao
+                                    scMainPath,; // cDirInicial
+                                    .T.,; // lSave
+                                    nOR(GETF_LOCALHARD, GETF_NETWORKDRIVE),; // nOpcoes
+                                    .F.,; // lArvore
+                                    .T. ) // lKeepCase
+
+        // scSelectedFile := cGetFile( cDialogFileMask,; // cMascara
+        //                             "Selecionar arquivo",; // cTitulo
+        //                             0,; // nMascpadrao
+        //                             scMainPath,; // cDirInicial
+        //                             .T.,; // lSave
+        //                             nOR(GETF_LOCALHARD, GETF_NETWORKDRIVE),; // nOpcoes
+        //                             .F.,; // lArvore
+        //                             .T. ) // lKeepCase
+
+        if empty(scSelectedFile)
+            if MsgYesNo("Deseja cancelar a seleção do arquivo?","Cancelar!?")
+                scSelectedFile := ""
+                exit
+            endif
+        endif
+
+        if !Empty(scSelectedFile) .And. ".xlsx" $ scSelectedFile .And. File(scSelectedFile) // verifica se o arquivo selecionado é válido
+            lSelected := .T.
+        else
+            scSelectedFile := "" // tratativa para arquivo inválido
+        endif
+
+    enddo
